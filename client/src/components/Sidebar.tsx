@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Menu, X, UserPlus, Edit } from 'lucide-react';
+import { Menu, X, UserPlus, Edit, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -50,6 +50,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div onClick={onClose} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                   <UserPlus className="h-4 w-4" />
                   <span>Character Creation</span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link href="/world-building">
+                <div onClick={onClose} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                  <Map className="h-4 w-4" />
+                  <span>World Building</span>
                 </div>
               </Link>
             </li>
