@@ -9,7 +9,32 @@ interface EditorContentProps {
 
 const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
   ({ content, onChange }, ref) => {
+    const editorRef = useRef<HTMLDivElement | null>(null);
     const placeholderShown = !content;
+    
+    // Update the ref to the DOM node when it's available
+    useEffect(() => {
+      if (ref) {
+        if (typeof ref === 'function') {
+          if (editorRef.current) ref(editorRef.current);
+        } else {
+          ref.current = editorRef.current;
+        }
+      }
+    }, [ref, editorRef.current]);
+
+    // Keep the editor content synchronized with the content prop
+    useEffect(() => {
+      if (editorRef.current && !placeholderShown) {
+        const hasPlaceholder = editorRef.current.querySelector('.placeholder');
+        if (hasPlaceholder) {
+          editorRef.current.innerHTML = '';
+        }
+        if (editorRef.current.innerText !== content) {
+          editorRef.current.innerText = content;
+        }
+      }
+    }, [content, placeholderShown]);
 
     const handlePaste = (e: React.ClipboardEvent) => {
       e.preventDefault();
@@ -24,6 +49,14 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
 
     // Prevent default behavior for certain keys to maintain control of the editor
     const handleKeyDown = (e: React.KeyboardEvent) => {
+      // Prevent default Enter behavior if Shift key is not pressed
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        // Insert a single newline character
+        document.execCommand('insertText', false, '\n');
+        return;
+      }
+      
       // Allow common keyboard shortcuts
       if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(e.key.toLowerCase())) {
         e.preventDefault();
@@ -47,8 +80,8 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
 
     return (
       <div
-        ref={ref}
-        className="editor-content p-6"
+        ref={editorRef}
+        className="editor-content p-6 whitespace-pre-wrap"
         contentEditable={true}
         suppressContentEditableWarning={true}
         onPaste={handlePaste}
@@ -56,10 +89,8 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
         onKeyDown={handleKeyDown}
         data-placeholder="Start typing, or paste Markdown content..."
       >
-        {placeholderShown ? (
+        {placeholderShown && (
           <div className="placeholder">Start typing, or paste Markdown content...</div>
-        ) : (
-          <ReactMarkdown>{content}</ReactMarkdown>
         )}
       </div>
     );

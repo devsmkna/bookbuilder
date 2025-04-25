@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Maximize2, Minimize2, Save } from "lucide-react";
+import { Moon, Sun, Maximize2, Minimize2, Save, Menu } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,13 +9,15 @@ interface HeaderProps {
   toggleFullscreen: () => void;
   isDarkTheme: boolean;
   toggleTheme: () => void;
+  onOpenSidebar: () => void;
 }
 
 export default function Header({ 
   isFullscreen, 
   toggleFullscreen, 
   isDarkTheme, 
-  toggleTheme 
+  toggleTheme,
+  onOpenSidebar
 }: HeaderProps) {
   const { toast } = useToast();
   
@@ -44,6 +46,15 @@ export default function Header({
     <header className="border-b border-border py-3">
       <div className="container mx-auto max-w-4xl px-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2"
+            onClick={onOpenSidebar}
+            aria-label="Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
           <h1 className="font-medium text-primary">WYSIWYG Markdown Editor</h1>
         </div>
         

@@ -102,15 +102,24 @@ export function useEditor() {
       // Apply formatting to the selected text
       const formattedText = applyMarkdownFormat(selectedText, format);
       
-      // Create a temporary element to handle the insertion
-      const tempElement = document.createElement('div');
-      tempElement.innerHTML = formattedText;
-      
       // Replace the selected text with the formatted text
       range.deleteContents();
-      range.insertNode(document.createTextNode(formattedText));
       
-      // Update the content
+      // Insert the formatted text at the current selection
+      const textNode = document.createTextNode(formattedText);
+      range.insertNode(textNode);
+      
+      // Create a new range after the inserted text to avoid immediate
+      // overwriting of formatting when continuing to type
+      const newRange = document.createRange();
+      newRange.setStartAfter(textNode);
+      newRange.collapse(true);
+      
+      // Clear existing selections and set the new one
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      
+      // Update the content state with the newly formatted text
       if (editorRef.current) {
         setContent(editorRef.current.innerText);
       }
@@ -128,6 +137,20 @@ export function useEditor() {
     setPosition: setFormatMenuPosition,
   };
 
+  // Save or restore document content
+  const saveTemporaryContent = useCallback(() => {
+    if (content) {
+      localStorage.setItem('temp-document-content', content);
+    }
+  }, [content]);
+
+  const restoreTemporaryContent = useCallback(() => {
+    const savedContent = localStorage.getItem('temp-document-content');
+    if (savedContent) {
+      setContent(savedContent);
+    }
+  }, []);
+
   return {
     editorRef,
     content,
@@ -142,5 +165,7 @@ export function useEditor() {
     toggleTheme,
     formatSelectedText,
     handleSelectionChange,
+    saveTemporaryContent,
+    restoreTemporaryContent
   };
 }

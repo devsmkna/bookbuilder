@@ -3,9 +3,12 @@ import Header from "./Header";
 import EditorContent from "./EditorContent";
 import FormatMenu from "./FormatMenu";
 import Footer from "./Footer";
+import Sidebar from "./Sidebar";
 import { useEditor } from "@/hooks/use-editor";
 
 export default function Editor() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const {
     editorRef,
     content,
@@ -20,6 +23,7 @@ export default function Editor() {
     toggleTheme,
     formatSelectedText,
     handleSelectionChange,
+    saveTemporaryContent,
   } = useEditor();
 
   useEffect(() => {
@@ -59,13 +63,37 @@ export default function Editor() {
     };
   }, [editorRef, formatMenuProps]);
 
+  // Save content when navigating away
+  useEffect(() => {
+    // Save content before user navigates away
+    const handleBeforeNavigate = () => {
+      saveTemporaryContent();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeNavigate);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeNavigate);
+    };
+  }, [saveTemporaryContent]);
+
+  const handleOpenSidebar = () => {
+    setIsSidebarOpen(true);
+  };
+
+  const handleCloseSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   return (
     <div className={`min-h-screen flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
+      <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />
+      
       <Header 
         isFullscreen={isFullscreen} 
         toggleFullscreen={toggleFullscreen}
         isDarkTheme={isDarkTheme}
         toggleTheme={toggleTheme}
+        onOpenSidebar={handleOpenSidebar}
       />
       
       <main className="flex-1 overflow-auto">
