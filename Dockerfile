@@ -2,13 +2,9 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files
 COPY package.json package-lock.json ./
+RUN npm install
 
-# Install dependencies
-RUN npm ci
-
-# Copy application code
 COPY . .
 
 # Build the application
