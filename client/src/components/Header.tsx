@@ -55,7 +55,7 @@ export default function Header({
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="font-medium text-primary">WYSIWYG Markdown Editor</h1>
+          <h1 className="font-medium text-primary">BookBuilder Editor</h1>
         </div>
         
         <div className="flex items-center space-x-3">
