@@ -101,20 +101,43 @@
     @apply min-h-[70vh] outline-none;
   }
 
-  .editor-content h1 {
+  .editor-content h1, 
+  .editor-content [data-markdown="h1"],
+  .editor-content div:has(> span[data-md="h1"]) {
     @apply text-3xl mt-4 mb-2 font-semibold;
   }
 
-  .editor-content h2 {
+  .editor-content h2, 
+  .editor-content [data-markdown="h2"],
+  .editor-content div:has(> span[data-md="h2"]) {
     @apply text-2xl mt-4 mb-2 font-semibold;
   }
 
-  .editor-content h3 {
+  .editor-content h3, 
+  .editor-content [data-markdown="h3"],
+  .editor-content div:has(> span[data-md="h3"]) {
     @apply text-xl mt-4 mb-2 font-semibold;
   }
 
   .editor-content p {
     @apply mb-4;
+  }
+
+  .editor-content strong, 
+  .editor-content b,
+  .editor-content [data-markdown="bold"] {
+    @apply font-bold;
+  }
+
+  .editor-content em, 
+  .editor-content i,
+  .editor-content [data-markdown="italic"] {
+    @apply italic;
+  }
+
+  .editor-content u,
+  .editor-content [data-markdown="underline"] {
+    @apply underline;
   }
 
   .editor-content ul, .editor-content ol {
@@ -129,11 +152,13 @@
     @apply list-decimal;
   }
 
-  .editor-content blockquote {
+  .editor-content blockquote,
+  .editor-content [data-markdown="quote"] {
     @apply border-l-4 border-secondary pl-4 ml-2 text-secondary;
   }
 
-  .editor-content code {
+  .editor-content code,
+  .editor-content [data-markdown="code"] {
     @apply font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm;
   }
 
@@ -143,6 +168,24 @@
 
   .editor-content pre code {
     @apply p-0 bg-transparent;
+  }
+
+  /* Special Markdown formatting during typing */
+  .editor-content span.markdown-bold {
+    @apply font-bold;
+  }
+
+  .editor-content span.markdown-italic {
+    @apply italic;
+  }
+
+  .editor-content span.markdown-code {
+    @apply font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm;
+  }
+
+  /* Format menu */
+  .format-menu {
+    @apply transition-all duration-200;
   }
 
   /* Placeholder */

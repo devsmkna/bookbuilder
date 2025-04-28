@@ -105,21 +105,48 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
     const applyMarkdownFormatting = () => {
       if (!editorRef.current || isComposing) return;
       
-      // Get current content and selection
+      // Get current content and selection position
       const currentContent = editorRef.current.innerText;
+      
+      // Save caret position before manipulating DOM
       saveCaretPosition();
       
-      // Apply Markdown patterns
-      let formattedContent = currentContent;
+      // Track if formatting was applied
+      let wasFormatApplied = false;
+      
+      // Apply HTML for markdown patterns
       for (const { pattern, tag } of MARKDOWN_PATTERNS) {
-        if (pattern.test(formattedContent)) {
-          // Reset pattern's lastIndex
+        // Reset pattern's lastIndex (needed for regex with global flag)
+        pattern.lastIndex = 0;
+        
+        if (pattern.test(currentContent)) {
+          // Reset for iteration
           pattern.lastIndex = 0;
           
-          const matches = formattedContent.match(pattern);
-          if (matches) {
-            // Apply formatting without changing the text
-            onChange(formattedContent);
+          const elementContent = editorRef.current.innerHTML;
+          
+          // Create a temporary element to work with the HTML
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = elementContent;
+          
+          // Apply formatting
+          const updatedHTML = elementContent.replace(pattern, (match, content) => {
+            wasFormatApplied = true;
+            return `<${tag}>${content}</${tag}>`;
+          });
+          
+          if (wasFormatApplied) {
+            // Apply the formatted HTML
+            editorRef.current.innerHTML = updatedHTML;
+            
+            // Update content state
+            onChange(currentContent);
+            
+            // Restore caret position
+            setTimeout(() => {
+              restoreCaretPosition();
+            }, 0);
+            
             return;
           }
         }
