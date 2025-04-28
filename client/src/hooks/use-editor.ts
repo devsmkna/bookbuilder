@@ -122,12 +122,16 @@ export function useEditor() {
       // Update the content state with the newly formatted text
       if (editorRef.current) {
         setContent(editorRef.current.innerText);
+        
+        // Force trigger an update event
+        const inputEvent = new Event('input', { bubbles: true });
+        editorRef.current.dispatchEvent(inputEvent);
       }
       
       // Hide the format menu
       setIsFormatMenuVisible(false);
     },
-    [selection, editorRef]
+    [selection, editorRef, setContent]
   );
 
   const formatMenuProps: FormatMenuProps = {
