@@ -100,3 +100,26 @@ export function countWordsAndChars(text: string): { words: number, chars: number
   
   return { words, chars };
 }
+
+// Process wiki-style links with [[reference]] syntax
+export function processWikiLinks(text: string, entities: {id: string, name: string, type: string}[]): string {
+  // Find all [[reference]] patterns
+  const linkRegex = /\[\[(.*?)\]\]/g;
+  
+  // Replace all wiki links with HTML anchors
+  return text.replace(linkRegex, (match, name) => {
+    // Find entity that matches the name
+    const entity = entities.find(e => 
+      e.name.toLowerCase() === name.toLowerCase() || 
+      name.toLowerCase().startsWith(e.name.toLowerCase())
+    );
+    
+    if (entity) {
+      // Create a proper anchor tag with data attributes for entity type and id
+      return `<a href="#" class="wiki-link" data-entity-id="${entity.id}" data-entity-type="${entity.type}">${name}</a>`;
+    }
+    
+    // If no match is found, return with a class indicating it's not found
+    return `<a href="#" class="wiki-link wiki-link-not-found">${name}</a>`;
+  });
+}

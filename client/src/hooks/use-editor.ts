@@ -1,6 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { applyMarkdownFormat, countWordsAndChars } from "@/lib/utils";
+import { applyMarkdownFormat, countWordsAndChars, processWikiLinks } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+
+// Entity types that can be linked in the editor
+export interface LinkedEntity {
+  id: string;
+  name: string;
+  type: "character" | "place" | "race" | "event";
+}
 
 interface FormatMenuProps {
   isVisible: boolean;
@@ -17,6 +24,9 @@ export function useEditor() {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [renderedContent, setRenderedContent] = useState<string>("");
+  const [linkedEntities, setLinkedEntities] = useState<LinkedEntity[]>([]);
+  const [isWysiwygMode, setIsWysiwygMode] = useState<boolean>(true);
   
   // Get system preference for dark mode
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
@@ -41,6 +51,83 @@ export function useEditor() {
     setWordCount(words);
     setCharCount(chars);
   }, [content]);
+  
+  // Load linked entities (characters and places)
+  useEffect(() => {
+    // Load characters
+    const savedCharacters = localStorage.getItem('characters');
+    const savedPlaces = localStorage.getItem('world-builder-places');
+    const savedRaces = localStorage.getItem('book-builder-races');
+    const savedEvents = localStorage.getItem('book-builder-storyboard');
+    
+    let entities: LinkedEntity[] = [];
+    
+    // Parse and add characters
+    if (savedCharacters) {
+      try {
+        const characters = JSON.parse(savedCharacters);
+        entities = entities.concat(
+          characters.map((char: any) => ({
+            id: char.id,
+            name: char.name,
+            type: 'character'
+          }))
+        );
+      } catch (e) {
+        console.error('Failed to parse saved characters:', e);
+      }
+    }
+    
+    // Parse and add places
+    if (savedPlaces) {
+      try {
+        const places = JSON.parse(savedPlaces);
+        entities = entities.concat(
+          places.map((place: any) => ({
+            id: place.id,
+            name: place.name,
+            type: 'place'
+          }))
+        );
+      } catch (e) {
+        console.error('Failed to parse saved places:', e);
+      }
+    }
+    
+    // Parse and add races
+    if (savedRaces) {
+      try {
+        const races = JSON.parse(savedRaces);
+        entities = entities.concat(
+          races.map((race: any) => ({
+            id: race.id,
+            name: race.name,
+            type: 'race'
+          }))
+        );
+      } catch (e) {
+        console.error('Failed to parse saved races:', e);
+      }
+    }
+    
+    // Parse and add story events
+    if (savedEvents) {
+      try {
+        const events = JSON.parse(savedEvents);
+        entities = entities.concat(
+          events.map((event: any) => ({
+            id: event.id,
+            name: event.title || 'Untitled Event',
+            type: 'event'
+          }))
+        );
+      } catch (e) {
+        console.error('Failed to parse saved events:', e);
+      }
+    }
+    
+    setLinkedEntities(entities);
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(prev => !prev);
@@ -154,6 +241,63 @@ export function useEditor() {
       setContent(savedContent);
     }
   }, []);
+  
+  // Process content with wiki links
+  const processContent = useCallback(() => {
+    if (!content) {
+      setRenderedContent("");
+      return;
+    }
+    
+    // Process the content with markdown and wiki links
+    const processed = processWikiLinks(content, linkedEntities);
+    setRenderedContent(processed);
+  }, [content, linkedEntities]);
+  
+  // Toggle between raw markdown and WYSIWYG mode
+  const toggleEditorMode = useCallback(() => {
+    setIsWysiwygMode(prev => !prev);
+  }, []);
+  
+  // Handle adding a wiki link by selecting text and converting to [[text]]
+  const createWikiLink = useCallback(() => {
+    if (!selection || !editorRef.current) return;
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = selection.toString().trim();
+    
+    if (!selectedText) return;
+    
+    // Add the wiki link syntax
+    const wikiLinkText = `[[${selectedText}]]`;
+    
+    // Replace the selected text with the wiki link
+    range.deleteContents();
+    const textNode = document.createTextNode(wikiLinkText);
+    range.insertNode(textNode);
+    
+    // Create a new range after the inserted text
+    const newRange = document.createRange();
+    newRange.setStartAfter(textNode);
+    newRange.collapse(true);
+    
+    // Clear existing selections and set the new one
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    
+    // Update the content state
+    if (editorRef.current) {
+      setContent(editorRef.current.innerText);
+      
+      // Trigger an input event to update the editor
+      const inputEvent = new Event('input', { bubbles: true });
+      editorRef.current.dispatchEvent(inputEvent);
+    }
+    
+    // Process the content to show the updated links
+    processContent();
+    
+  }, [selection, editorRef, processContent, setContent]);
 
   return {
     editorRef,
