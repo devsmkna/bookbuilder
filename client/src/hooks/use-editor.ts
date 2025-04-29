@@ -299,10 +299,16 @@ export function useEditor() {
     
   }, [selection, editorRef, processContent, setContent]);
 
+  // Process content when it changes or when linkedEntities change
+  useEffect(() => {
+    processContent();
+  }, [content, linkedEntities, processContent]);
+
   return {
     editorRef,
     content,
     setContent,
+    renderedContent,
     selection,
     formatMenuProps,
     wordCount,
@@ -311,9 +317,14 @@ export function useEditor() {
     toggleFullscreen,
     isDarkTheme,
     toggleTheme,
+    isWysiwygMode,
+    toggleEditorMode,
+    linkedEntities,
     formatSelectedText,
     handleSelectionChange,
     saveTemporaryContent,
-    restoreTemporaryContent
+    restoreTemporaryContent,
+    processContent,
+    createWikiLink
   };
 }

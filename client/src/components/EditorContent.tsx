@@ -1,10 +1,15 @@
 import React, { forwardRef, useRef, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { LinkedEntity } from "@/hooks/use-editor";
 
 interface EditorContentProps {
   content: string;
   onChange: (value: string) => void;
+  renderedContent?: string;
+  isWysiwygMode?: boolean;
+  linkedEntities?: LinkedEntity[];
+  onCreateWikiLink?: () => void;
 }
 
 // Regular expressions for inline markdown patterns
@@ -22,7 +27,14 @@ const MARKDOWN_PATTERNS = [
 ];
 
 const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
-  ({ content, onChange }, ref) => {
+  ({ 
+    content, 
+    onChange, 
+    renderedContent = '', 
+    isWysiwygMode = true, 
+    linkedEntities = [], 
+    onCreateWikiLink 
+  }, ref) => {
     const editorRef = useRef<HTMLDivElement | null>(null);
     const placeholderShown = !content;
     const [isComposing, setIsComposing] = useState(false);
@@ -177,6 +189,19 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
         return;
       }
       
+      // Add wiki link with Ctrl+K or Cmd+K 
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        // Let the parent component handle wiki link creation
+        if (onCreateWikiLink && window.getSelection) {
+          const selection = window.getSelection();
+          if (selection && !selection.isCollapsed && selection.toString().trim() !== '') {
+            onCreateWikiLink();
+            return;
+          }
+        }
+      }
+      
       // Handle key combinations for formatting
       if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(e.key.toLowerCase())) {
         e.preventDefault();
@@ -198,7 +223,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
       }
       
       // Detect when special markdown characters are typed and apply formatting
-      if (['*', '`', '#', '>', '-', '_', '~'].includes(e.key)) {
+      if (['*', '`', '#', '>', '-', '_', '~', '[', ']'].includes(e.key)) {
         // We'll delay the formatting check slightly to get the updated content
         setTimeout(applyMarkdownFormatting, 10);
       }
@@ -222,10 +247,41 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
       }
     };
 
+    // Function to handle clicks on wiki links
+    const handleWikiLinkClick = (e: React.MouseEvent) => {
+      // Check if the clicked element is a wiki link
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('wiki-link')) {
+        e.preventDefault();
+        
+        // Get entity info from data attributes
+        const entityId = target.getAttribute('data-entity-id');
+        const entityType = target.getAttribute('data-entity-type');
+        
+        // You could dispatch an event or call a callback to open the entity details
+        console.log(`Wiki link clicked: ${entityType} - ${entityId}`);
+      }
+    };
+    
+    // When in WYSIWYG mode, we render a preview div with the rendered content
+    if (isWysiwygMode && renderedContent) {
+      return (
+        <div 
+          className="editor-wysiwyg p-6 whitespace-pre-wrap"
+          onClick={handleWikiLinkClick}
+          dangerouslySetInnerHTML={{ __html: renderedContent }}
+        />
+      );
+    }
+    
+    // Raw markdown editor mode
     return (
       <div
         ref={editorRef}
-        className="editor-content p-6 whitespace-pre-wrap"
+        className={cn(
+          "editor-content p-6 whitespace-pre-wrap",
+          isWysiwygMode ? "hidden" : "block"
+        )}
         contentEditable={true}
         suppressContentEditableWarning={true}
         onPaste={handlePaste}

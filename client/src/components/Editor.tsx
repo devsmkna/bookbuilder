@@ -5,6 +5,9 @@ import FormatMenu from "./FormatMenu";
 import Footer from "./Footer";
 import Sidebar from "./Sidebar";
 import { useEditor } from "@/hooks/use-editor";
+import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Link, Text, FileText, Eye, EyeOff, Link2 } from "lucide-react";
 
 export default function Editor() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,6 +16,7 @@ export default function Editor() {
     editorRef,
     content,
     setContent,
+    renderedContent,
     selection,
     formatMenuProps,
     wordCount,
@@ -21,9 +25,14 @@ export default function Editor() {
     toggleFullscreen,
     isDarkTheme,
     toggleTheme,
+    isWysiwygMode,
+    toggleEditorMode,
+    linkedEntities,
     formatSelectedText,
     handleSelectionChange,
     saveTemporaryContent,
+    processContent,
+    createWikiLink
   } = useEditor();
 
   useEffect(() => {
