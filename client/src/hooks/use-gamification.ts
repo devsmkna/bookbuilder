@@ -73,8 +73,8 @@ export function useGamification(): GamificationState {
   // Calculate experience based on achievements
   const calculateExperience = useCallback(() => {
     return achievements
-      .filter(a => a.unlocked)
-      .reduce((total, achievement) => total + achievement.xp, 0);
+      .filter((a: Achievement) => a.unlocked)
+      .reduce((total: number, achievement: Achievement) => total + achievement.xp, 0);
   }, [achievements]);
   
   // Initialize experience
@@ -122,7 +122,7 @@ export function useGamification(): GamificationState {
     let experienceGained = 0;
     
     // Create a copy of achievements to update
-    const updatedAchievements = achievements.map(achievement => {
+    const updatedAchievements = achievements.map((achievement: Achievement) => {
       const { unlocked, progress, newlyUnlocked } = checkAchievementUnlock(
         achievement,
         stats
@@ -148,10 +148,10 @@ export function useGamification(): GamificationState {
       setAchievements(updatedAchievements);
       
       // Update experience
-      setExperience(prev => prev + experienceGained);
+      setExperience((prev: number) => prev + experienceGained);
       
       // Add to recent achievements
-      setRecentAchievements(prev => [...newlyUnlockedAchievements, ...prev]);
+      setRecentAchievements((prev: Achievement[]) => [...newlyUnlockedAchievements, ...prev]);
       
       // Store updated achievements
       localStorage.setItem('gamification_achievements', JSON.stringify({ 
