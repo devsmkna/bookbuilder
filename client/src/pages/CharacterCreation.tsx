@@ -31,6 +31,7 @@ interface Character {
   skinColor: string;
   height: string;
   bodyType: string;
+  imageData: string; // Base64 encoded image for character portrait
   
   // Behavior
   attitude: string;
@@ -57,6 +58,9 @@ interface Character {
   
   // Creation date
   createdAt: Date;
+  
+  // Track completion percentage
+  completionPercentage?: number;
 }
 
 // Default character template
@@ -73,6 +77,7 @@ const defaultCharacter: Omit<Character, 'id' | 'createdAt'> = {
   skinColor: "#f5deb3", // Default wheat/tan
   height: "",
   bodyType: "",
+  imageData: "", // Empty string for no image
   
   attitude: "",
   bodyLanguage: "",
@@ -92,7 +97,9 @@ const defaultCharacter: Omit<Character, 'id' | 'createdAt'> = {
   motivationEvolution: "",
   emotionalEvolution: "",
   relationshipEvolution: "",
-  dreamEvolution: ""
+  dreamEvolution: "",
+  
+  completionPercentage: 0
 };
 
 // Interface for Race
@@ -271,6 +278,48 @@ export default function CharacterCreation() {
     });
   };
   
+  // Handle character image upload
+  const handleCharacterImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editingCharacter || !e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // File size validation (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 2MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result && editingCharacter) {
+        setEditingCharacter({
+          ...editingCharacter,
+          imageData: event.target.result as string
+        });
+        
+        toast({
+          title: "Image uploaded",
+          description: "Character image has been added successfully."
+        });
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
+  
   const createNewRace = () => {
     // Save current character state to avoid data loss
     if (editingCharacter && isCreatingNew) {
@@ -352,70 +401,152 @@ export default function CharacterCreation() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {characters.map(character => (
-                        <div 
-                          key={character.id}
-                          className={`p-3 rounded-md cursor-pointer flex justify-between items-center ${
-                            editingCharacter && editingCharacter.id === character.id 
-                              ? 'bg-accent text-accent-foreground' 
-                              : 'hover:bg-muted'
-                          }`}
-                          onClick={() => {
-                            setEditingCharacter(character);
-                            setIsCreatingNew(false);
-                            setActiveTab("basic");
-                          }}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div 
-                              className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center"
-                              style={{ 
-                                backgroundColor: character.skinColor || "#e0e0e0",
-                                border: `2px solid ${character.hairColor || "#a0a0a0"}`
-                              }}
-                            >
-                              {/* Create a stylized character avatar based on their colors */}
-                              <div className="flex flex-col items-center w-full h-full">
+                      {characters.map(character => {
+                        // Calculate character completion percentage
+                        const totalFields = 25;
+                        let filledFields = 0;
+                        
+                        // Basic Info
+                        if (character.name) filledFields++;
+                        if (character.pronunciation) filledFields++;
+                        if (character.aliases) filledFields++;
+                        if (character.age) filledFields++;
+                        if (character.race) filledFields++;
+                        if (character.height) filledFields++;
+                        if (character.bodyType) filledFields++;
+                        if (character.imageData) filledFields++;
+                        
+                        // Colors (always filled with defaults)
+                        filledFields += 2;
+                        if (character.hasHeterochromia) filledFields++;
+                        
+                        // Behavior
+                        if (character.attitude) filledFields++;
+                        if (character.bodyLanguage) filledFields++;
+                        if (character.bodySigns) filledFields++;
+                        
+                        // Personal
+                        if (character.parentalRelationship) filledFields++;
+                        if (character.parentalTeachings) filledFields++;
+                        if (character.respect) filledFields++;
+                        if (character.hates) filledFields++;
+                        if (character.fears) filledFields++;
+                        if (character.contradictions) filledFields++;
+                        if (character.dreams) filledFields++;
+                        if (character.sacrificeForDreams) filledFields++;
+                        if (character.values) filledFields++;
+                        if (character.antiValues) filledFields++;
+                        
+                        // Evolution
+                        if (character.motivationEvolution) filledFields++;
+                        if (character.emotionalEvolution) filledFields++;
+                        if (character.relationshipEvolution) filledFields++;
+                        if (character.dreamEvolution) filledFields++;
+                        
+                        const completionPercentage = Math.round((filledFields / totalFields) * 100);
+                        
+                        return (
+                          <div 
+                            key={character.id}
+                            className={`p-3 rounded-md cursor-pointer ${
+                              editingCharacter && editingCharacter.id === character.id 
+                                ? 'bg-accent text-accent-foreground' 
+                                : 'hover:bg-muted'
+                            }`}
+                            onClick={() => {
+                              setEditingCharacter(character);
+                              setIsCreatingNew(false);
+                              setActiveTab("basic");
+                            }}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center space-x-3">
                                 <div 
-                                  className="w-full h-3 mt-1"
-                                  style={{ backgroundColor: character.hairColor || "#a0a0a0" }}
-                                />
-                                <div className="flex justify-center mt-1 space-x-1">
-                                  <div 
-                                    className="w-2 h-2 rounded-full"
-                                    style={{ backgroundColor: character.eyeColor || "#4a4a4a" }}
-                                  />
-                                  <div 
-                                    className="w-2 h-2 rounded-full"
-                                    style={{ 
-                                      backgroundColor: character.hasHeterochromia 
-                                        ? character.secondEyeColor || "#4a4a4a" 
-                                        : character.eyeColor || "#4a4a4a" 
-                                    }}
-                                  />
+                                  className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border-2"
+                                  style={{ 
+                                    borderColor: character.hairColor || "#a0a0a0"
+                                  }}
+                                >
+                                  {character.imageData ? (
+                                    <img 
+                                      src={character.imageData} 
+                                      alt={character.name} 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    /* Create a stylized character avatar based on their colors */
+                                    <div 
+                                      className="flex flex-col items-center w-full h-full"
+                                      style={{ backgroundColor: character.skinColor || "#e0e0e0" }}
+                                    >
+                                      <div 
+                                        className="w-full h-4"
+                                        style={{ backgroundColor: character.hairColor || "#a0a0a0" }}
+                                      />
+                                      <div className="flex justify-center mt-2 space-x-1">
+                                        <div 
+                                          className="w-2 h-2 rounded-full"
+                                          style={{ backgroundColor: character.eyeColor || "#4a4a4a" }}
+                                        />
+                                        <div 
+                                          className="w-2 h-2 rounded-full"
+                                          style={{ 
+                                            backgroundColor: character.hasHeterochromia 
+                                              ? character.secondEyeColor || "#4a4a4a" 
+                                              : character.eyeColor || "#4a4a4a" 
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
+                                <div className="flex-1">
+                                  <div className="font-medium">{character.name || "Unnamed Character"}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {character.aliases && `Also known as: ${character.aliases}`}
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0 opacity-50 hover:opacity-100 ml-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteCharacter(character.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div>
-                              <div className="font-medium">{character.name || "Unnamed Character"}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {character.aliases && `Also known as: ${character.aliases}`}
+                            
+                            <div className="pl-14 text-xs space-y-1">
+                              {character.age && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Age:</span>
+                                  <span>{character.age}</span>
+                                </div>
+                              )}
+                              {character.race && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Race:</span>
+                                  <span>{character.race}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between font-medium mt-1">
+                                <span>Completion:</span>
+                                <span>{completionPercentage}%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-primary rounded-full" 
+                                  style={{ width: `${completionPercentage}%` }}
+                                />
                               </div>
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 w-8 p-0 opacity-50 hover:opacity-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteCharacter(character.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -492,95 +623,124 @@ export default function CharacterCreation() {
                       
                       {/* Basic Info Tab */}
                       <TabsContent value="basic" className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <Label htmlFor="name" className="block mb-2">Name</Label>
-                            <Input
-                              id="name"
-                              placeholder="Character Name"
-                              value={editingCharacter.name}
-                              onChange={(e) => handleInputChange('name', e.target.value)}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="pronunciation" className="block mb-2">Name Pronunciation</Label>
-                            <Input
-                              id="pronunciation"
-                              placeholder="How to pronounce the name"
-                              value={editingCharacter.pronunciation}
-                              onChange={(e) => handleInputChange('pronunciation', e.target.value)}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="aliases" className="block mb-2">Aliases</Label>
-                            <Input
-                              id="aliases"
-                              placeholder="Other names or titles"
-                              value={editingCharacter.aliases}
-                              onChange={(e) => handleInputChange('aliases', e.target.value)}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="age" className="block mb-2">Age</Label>
-                            <Input
-                              id="age"
-                              placeholder="Character's age"
-                              value={editingCharacter.age}
-                              onChange={(e) => handleInputChange('age', e.target.value)}
-                            />
-                          </div>
-                        
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
-                              <Label htmlFor="race" className="block">Race</Label>
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="sm"
-                                className="h-6 px-2 text-xs"
-                                onClick={createNewRace}
-                              >
-                                Create new
-                              </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* Character Image */}
+                          <div className="md:col-span-1">
+                            <Label htmlFor="characterImage" className="block mb-2">Character Image</Label>
+                            <div className="border rounded-md p-2 flex items-center justify-center bg-muted/30 relative min-h-[200px]">
+                              {editingCharacter.imageData ? (
+                                <img
+                                  src={editingCharacter.imageData}
+                                  alt={editingCharacter.name || "Character image"}
+                                  className="max-h-[200px] max-w-full object-contain"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
+                                  <UserPlus className="h-10 w-10 mb-2 opacity-20" />
+                                  <p className="text-sm">No image uploaded</p>
+                                </div>
+                              )}
                             </div>
-                            <Select 
-                              value={editingCharacter.race} 
-                              onValueChange={(value) => handleInputChange('race', value)}
-                            >
-                              <SelectTrigger id="race">
-                                <SelectValue placeholder="Select a race" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {races.length === 0 ? (
-                                  <div className="text-center py-4 text-muted-foreground">
-                                    <p className="text-sm">No races created yet</p>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="mt-2"
-                                      onClick={() => {
-                                        // Close the select dropdown and navigate to race management
-                                        document.body.click(); // Hack to close the dropdown
-                                        setTimeout(() => navigate('/race-management'), 100);
-                                      }}
-                                    >
-                                      <Plus className="h-3 w-3 mr-1" />
-                                      Create Race
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  races.map(race => (
-                                    <SelectItem key={race.id} value={race.name}>
-                                      {race.name}
-                                    </SelectItem>
-                                  ))
-                                )}
-                              </SelectContent>
-                            </Select>
+                            <Input
+                              id="characterImage"
+                              type="file"
+                              accept="image/*"
+                              onChange={handleCharacterImageUpload}
+                              className="mt-4"
+                            />
+                          </div>
+                          
+                          {/* Basic Info Fields */}
+                          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="name" className="block mb-2">Name</Label>
+                              <Input
+                                id="name"
+                                placeholder="Character Name"
+                                value={editingCharacter.name}
+                                onChange={(e) => handleInputChange('name', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="pronunciation" className="block mb-2">Name Pronunciation</Label>
+                              <Input
+                                id="pronunciation"
+                                placeholder="How to pronounce the name"
+                                value={editingCharacter.pronunciation}
+                                onChange={(e) => handleInputChange('pronunciation', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="aliases" className="block mb-2">Aliases</Label>
+                              <Input
+                                id="aliases"
+                                placeholder="Other names or titles"
+                                value={editingCharacter.aliases}
+                                onChange={(e) => handleInputChange('aliases', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="age" className="block mb-2">Age</Label>
+                              <Input
+                                id="age"
+                                placeholder="Character's age"
+                                value={editingCharacter.age}
+                                onChange={(e) => handleInputChange('age', e.target.value)}
+                              />
+                            </div>
+                          
+                            <div>
+                              <div className="flex justify-between items-center mb-2">
+                                <Label htmlFor="race" className="block">Race</Label>
+                                <Button 
+                                  type="button" 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={createNewRace}
+                                >
+                                  Create new
+                                </Button>
+                              </div>
+                              <Select 
+                                value={editingCharacter.race} 
+                                onValueChange={(value) => handleInputChange('race', value)}
+                              >
+                                <SelectTrigger id="race">
+                                  <SelectValue placeholder="Select a race" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {races.length === 0 ? (
+                                    <div className="text-center py-4 text-muted-foreground">
+                                      <p className="text-sm">No races created yet</p>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-2"
+                                        onClick={() => {
+                                          // Close the select dropdown and navigate to race management
+                                          document.body.click(); // Hack to close the dropdown
+                                          setTimeout(() => navigate('/race-management'), 100);
+                                        }}
+                                      >
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        Create Race
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    races.map(race => (
+                                      <SelectItem key={race.id} value={race.name}>
+                                        {race.name}
+                                      </SelectItem>
+                                    ))
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         </div>
                         
