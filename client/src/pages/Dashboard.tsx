@@ -35,14 +35,6 @@ export default function Dashboard() {
       />
       
       <Header
-        isFullscreen={false}
-        toggleFullscreen={() => {}}
-        isDarkTheme={isDarkTheme}
-        toggleTheme={() => {
-          const newTheme = !isDarkTheme;
-          localStorage.setItem("markdown-editor-theme", newTheme ? "dark" : "light");
-          setIsDarkTheme(newTheme);
-        }}
         onOpenSidebar={() => setIsSidebarOpen(true)}
       />
       

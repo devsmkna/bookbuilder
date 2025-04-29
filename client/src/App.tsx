@@ -25,7 +25,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="markdown-editor-theme">
+      <ThemeProvider defaultTheme="light" storageKey="book-builder-theme">
         <GamificationProvider>
           <Router />
           <Toaster />
