@@ -366,10 +366,41 @@ export default function CharacterCreation() {
                             setActiveTab("basic");
                           }}
                         >
-                          <div>
-                            <div className="font-medium">{character.name || "Unnamed Character"}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {character.aliases && `Also known as: ${character.aliases}`}
+                          <div className="flex items-center space-x-3">
+                            <div 
+                              className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center"
+                              style={{ 
+                                backgroundColor: character.skinColor || "#e0e0e0",
+                                border: `2px solid ${character.hairColor || "#a0a0a0"}`
+                              }}
+                            >
+                              {/* Create a stylized character avatar based on their colors */}
+                              <div className="flex flex-col items-center w-full h-full">
+                                <div 
+                                  className="w-full h-3 mt-1"
+                                  style={{ backgroundColor: character.hairColor || "#a0a0a0" }}
+                                />
+                                <div className="flex justify-center mt-1 space-x-1">
+                                  <div 
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: character.eyeColor || "#4a4a4a" }}
+                                  />
+                                  <div 
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ 
+                                      backgroundColor: character.hasHeterochromia 
+                                        ? character.secondEyeColor || "#4a4a4a" 
+                                        : character.eyeColor || "#4a4a4a" 
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-medium">{character.name || "Unnamed Character"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {character.aliases && `Also known as: ${character.aliases}`}
+                              </div>
                             </div>
                           </div>
                           <Button 
