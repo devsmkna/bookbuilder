@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  ACHIEVEMENTS, 
-  XP_LEVELS, 
-  checkAchievementUnlock, 
-  getExperienceForLevel, 
-  calculateLevelFromXP 
-} from '@/lib/gamification/constants';
 import { Achievement } from '@/lib/gamification/types';
+import {
+  ACHIEVEMENTS,
+  calculateLevelFromXP,
+  getExperienceForLevel,
+  checkAchievementUnlock
+} from '@/lib/gamification/constants';
 
 interface GamificationState {
   level: number;
@@ -29,171 +27,114 @@ interface GamificationState {
   resetLevelUpNotification: () => void;
 }
 
+// Helper function to get stored stats or default values
+const getStoredStats = () => {
+  try {
+    const storedStats = localStorage.getItem('gamification_stats');
+    return storedStats ? JSON.parse(storedStats) : null;
+  } catch (error) {
+    console.error('Error retrieving gamification stats:', error);
+    return null;
+  }
+};
+
+// Helper function to get stored achievements or default values
+const getStoredAchievements = () => {
+  try {
+    const storedAchievements = localStorage.getItem('gamification_achievements');
+    return storedAchievements ? JSON.parse(storedAchievements) : null;
+  } catch (error) {
+    console.error('Error retrieving gamification achievements:', error);
+    return null;
+  }
+};
+
 export function useGamification(): GamificationState {
-  const { toast } = useToast();
-
-  // Load saved state from localStorage
-  const [state, setState] = useState<{
-    level: number;
-    experience: number;
-    achievements: Achievement[];
-    stats: GamificationState['stats'];
-    lastUpdateDate: string | null;
-    recentAchievements: Achievement[];
-    showLevelUp: boolean;
-  }>(() => {
-    // Default initial state
-    const defaultState = {
-      level: 1,
-      experience: 0,
-      achievements: ACHIEVEMENTS,
-      stats: {
-        wordCount: 0,
-        characterCount: 0,
-        placeCount: 0,
-        sessionsCompleted: 0,
-        wordsPerDay: 0,
-        writeStreak: 0,
-        longestWriteStreak: 0
-      },
-      lastUpdateDate: null,
-      recentAchievements: [],
-      showLevelUp: false
+  // Initialize stats from localStorage or default values
+  const [stats, setStats] = useState(() => {
+    const storedStats = getStoredStats();
+    return storedStats?.stats || {
+      wordCount: 0,
+      characterCount: 0,
+      placeCount: 0,
+      sessionsCompleted: 0,
+      wordsPerDay: 0,
+      writeStreak: 0,
+      longestWriteStreak: 0
     };
-
-    // Try to load from localStorage
-    try {
-      const savedState = localStorage.getItem('gamification');
-      if (savedState) {
-        return { ...defaultState, ...JSON.parse(savedState) };
-      }
-    } catch (error) {
-      console.error('Failed to load gamification state:', error);
-    }
-
-    return defaultState;
   });
-
-  // Calculate experience to next level
-  const experienceToNextLevel = getExperienceForLevel(state.level + 1) - state.experience;
+  
+  // Initialize achievements from localStorage or default values
+  const [achievements, setAchievements] = useState(() => {
+    const storedAchievements = getStoredAchievements();
+    return storedAchievements?.achievements || ACHIEVEMENTS;
+  });
+  
+  // Calculate experience based on achievements
+  const calculateExperience = useCallback(() => {
+    return achievements
+      .filter(a => a.unlocked)
+      .reduce((total, achievement) => total + achievement.xp, 0);
+  }, [achievements]);
+  
+  // Initialize experience
+  const [experience, setExperience] = useState(() => {
+    const storedStats = getStoredStats();
+    return storedStats?.experience || calculateExperience();
+  });
+  
+  // Calculate level from experience
+  const level = calculateLevelFromXP(experience);
+  
+  // Calculate experience required for next level
+  const experienceToNextLevel = getExperienceForLevel(level + 1) - experience;
   
   // Calculate percentage to next level
-  const levelXP = getExperienceForLevel(state.level);
-  const nextLevelXP = getExperienceForLevel(state.level + 1);
-  const percentToNextLevel = ((state.experience - levelXP) / (nextLevelXP - levelXP)) * 100;
-
-  // Save state to localStorage whenever it changes
+  const percentToNextLevel = Math.min(
+    100,
+    ((experience - getExperienceForLevel(level)) / 
+     (getExperienceForLevel(level + 1) - getExperienceForLevel(level))) * 100
+  );
+  
+  // Track recent achievements for notifications
+  const [recentAchievements, setRecentAchievements] = useState<Achievement[]>([]);
+  
+  // State to control level up notification
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [lastLevel, setLastLevel] = useState(level);
+  
+  // Reset level up notification
+  const resetLevelUpNotification = () => {
+    setShowLevelUp(false);
+  };
+  
+  // Check for level up
   useEffect(() => {
-    try {
-      localStorage.setItem('gamification', JSON.stringify(state));
-    } catch (error) {
-      console.error('Failed to save gamification state:', error);
+    if (level > lastLevel) {
+      setShowLevelUp(true);
+      setLastLevel(level);
     }
-  }, [state]);
-
-  // Handle streak updates
+  }, [level, lastLevel]);
+  
+  // Check for achievement unlocks when stats change
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    let newlyUnlockedAchievements: Achievement[] = [];
+    let experienceGained = 0;
     
-    if (state.lastUpdateDate !== today) {
-      // Update last login date
-      setState(prevState => {
-        // Check if we already logged in today
-        if (prevState.lastUpdateDate === today) return prevState;
-        
-        // Calculate streak
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayString = yesterday.toISOString().split('T')[0];
-        
-        let newStreak = 1;
-        let longestStreak = prevState.stats.longestWriteStreak;
-        
-        if (prevState.lastUpdateDate === yesterdayString) {
-          // Continuing streak
-          newStreak = prevState.stats.writeStreak + 1;
-          if (newStreak > longestStreak) {
-            longestStreak = newStreak;
-          }
-        }
-        
-        return {
-          ...prevState,
-          lastUpdateDate: today,
-          stats: {
-            ...prevState.stats,
-            writeStreak: newStreak,
-            longestWriteStreak: longestStreak,
-            sessionsCompleted: prevState.stats.sessionsCompleted + 1
-          }
-        };
-      });
-    }
-  }, []);
-
-  // Function to add experience points
-  const addExperience = useCallback((amount: number, reason: string) => {
-    setState(prevState => {
-      const newExperience = prevState.experience + amount;
-      const newLevel = calculateLevelFromXP(newExperience);
-      
-      // Check if we leveled up
-      const leveledUp = newLevel > prevState.level;
-      
-      if (leveledUp) {
-        toast({
-          title: "Level Up!",
-          description: `You've reached level ${newLevel}`,
-        });
-      }
-      
-      return {
-        ...prevState,
-        level: newLevel,
-        experience: newExperience,
-        showLevelUp: leveledUp
-      };
-    });
-  }, [toast]);
-
-  // Update stats
-  const updateStats = useCallback((newStats: Partial<GamificationState['stats']>) => {
-    setState(prevState => ({
-      ...prevState,
-      stats: {
-        ...prevState.stats,
-        ...newStats
-      }
-    }));
-  }, []);
-
-  // Check achievements
-  useEffect(() => {
-    const { achievements, stats } = state;
-    
+    // Create a copy of achievements to update
     const updatedAchievements = achievements.map(achievement => {
-      const { unlocked, progress, newlyUnlocked } = checkAchievementUnlock(achievement, stats);
+      const { unlocked, progress, newlyUnlocked } = checkAchievementUnlock(
+        achievement,
+        stats
+      );
       
+      // If newly unlocked, add to recent achievements and add XP
       if (newlyUnlocked) {
-        // Add XP for newly unlocked achievement
-        addExperience(achievement.xp, `Achievement: ${achievement.title}`);
-        
-        // Show toast notification
-        toast({
-          title: "Achievement Unlocked!",
-          description: achievement.title,
-        });
-        
-        // Add to recent achievements
-        setState(prevState => ({
-          ...prevState,
-          recentAchievements: [
-            achievement,
-            ...prevState.recentAchievements
-          ].slice(0, 5) // Keep only 5 most recent
-        }));
+        newlyUnlockedAchievements.push({ ...achievement, unlocked: true });
+        experienceGained += achievement.xp;
       }
       
+      // Return updated achievement
       return {
         ...achievement,
         unlocked,
@@ -201,33 +142,41 @@ export function useGamification(): GamificationState {
       };
     });
     
-    // Update achievements if they've changed
-    if (JSON.stringify(updatedAchievements) !== JSON.stringify(achievements)) {
-      setState(prevState => ({
-        ...prevState,
-        achievements: updatedAchievements
+    // If any achievements were newly unlocked
+    if (newlyUnlockedAchievements.length > 0) {
+      // Update achievements
+      setAchievements(updatedAchievements);
+      
+      // Update experience
+      setExperience(prev => prev + experienceGained);
+      
+      // Add to recent achievements
+      setRecentAchievements(prev => [...newlyUnlockedAchievements, ...prev]);
+      
+      // Store updated achievements
+      localStorage.setItem('gamification_achievements', JSON.stringify({ 
+        achievements: updatedAchievements 
       }));
     }
-  }, [state.stats, addExperience, toast]);
-
-  // Function to reset level up notification
-  const resetLevelUpNotification = useCallback(() => {
-    setState(prevState => ({
-      ...prevState,
-      showLevelUp: false
+  }, [stats, achievements]);
+  
+  // Store stats when they change
+  useEffect(() => {
+    localStorage.setItem('gamification_stats', JSON.stringify({ 
+      stats,
+      experience 
     }));
-  }, []);
-
-  // Expose game state and functions
+  }, [stats, experience]);
+  
   return {
-    level: state.level,
-    experience: state.experience,
+    level,
+    experience,
     experienceToNextLevel,
-    achievements: state.achievements,
-    stats: state.stats,
+    achievements,
+    stats,
     percentToNextLevel,
-    recentAchievements: state.recentAchievements,
-    showLevelUp: state.showLevelUp,
+    recentAchievements,
+    showLevelUp,
     resetLevelUpNotification
   };
 }

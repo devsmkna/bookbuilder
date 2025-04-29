@@ -1,83 +1,110 @@
 import React, { useEffect, useState } from 'react';
 
-const generateParticles = (count: number) => {
-  return Array.from({ length: count }, () => ({
-    x: Math.random() * 100, // Random x position (percent)
-    y: -Math.random() * 20 - 10, // Start above the viewport
-    size: Math.random() * 6 + 4, // Random size between 4-10px
-    color: `hsl(${Math.random() * 360}, 80%, 60%)`, // Random bright color
-    velocity: {
-      x: (Math.random() - 0.5) * 8, // Random horizontal movement
-      y: Math.random() * 3 + 2 // Random fall speed
-    },
-    rotation: Math.random() * 360, // Random rotation
-    rotationSpeed: (Math.random() - 0.5) * 10 // Random rotation speed
-  }));
-};
-
 interface ConfettiProps {
   count?: number;
   duration?: number;
 }
 
+interface ConfettiPiece {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  color: string;
+  shape: 'circle' | 'square' | 'triangle';
+  animationDelay: number;
+}
+
+const COLORS = [
+  '#FF0000', // Red
+  '#FF7F00', // Orange
+  '#FFFF00', // Yellow
+  '#00FF00', // Green
+  '#0000FF', // Blue
+  '#4B0082', // Indigo
+  '#9400D3', // Violet
+  '#FF1493', // Pink
+  '#00FFFF', // Cyan
+  '#FFD700', // Gold
+];
+
 export function Confetti({ count = 100, duration = 3000 }: ConfettiProps) {
-  const [particles, setParticles] = useState<any[]>([]);
+  const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
   const [active, setActive] = useState(true);
 
+  // Generate confetti pieces
   useEffect(() => {
-    setParticles(generateParticles(count));
+    const newPieces: ConfettiPiece[] = [];
     
-    // Stop animation after duration
+    for (let i = 0; i < count; i++) {
+      newPieces.push({
+        id: i,
+        x: Math.random() * 100, // Random position across screen width (%)
+        y: -10 - Math.random() * 10, // Start above the screen
+        rotation: Math.random() * 360, // Random rotation
+        scale: 0.5 + Math.random() * 1, // Random size
+        color: COLORS[Math.floor(Math.random() * COLORS.length)], // Random color
+        shape: ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)] as 'circle' | 'square' | 'triangle', // Random shape
+        animationDelay: Math.random() * 500, // Random start delay
+      });
+    }
+    
+    setPieces(newPieces);
+    
+    // Cleanup after duration
     const timer = setTimeout(() => {
       setActive(false);
     }, duration);
     
     return () => clearTimeout(timer);
   }, [count, duration]);
-
-  useEffect(() => {
-    if (!active) return;
-    
-    let animationFrame: number;
-    
-    const updateParticles = () => {
-      setParticles(prevParticles => 
-        prevParticles.map(particle => ({
-          ...particle,
-          x: particle.x + particle.velocity.x * 0.1,
-          y: particle.y + particle.velocity.y,
-          rotation: (particle.rotation + particle.rotationSpeed) % 360,
-          // Remove particles that have fallen out of view
-          remove: particle.y > 110
-        })).filter(particle => !particle.remove)
-      );
-      
-      animationFrame = requestAnimationFrame(updateParticles);
-    };
-    
-    animationFrame = requestAnimationFrame(updateParticles);
-    
-    return () => cancelAnimationFrame(animationFrame);
-  }, [active]);
-
-  if (!active || particles.length === 0) return null;
-
+  
+  if (!active) return null;
+  
   return (
-    <div className="fixed inset-0 pointer-events-none z-50" aria-hidden="true">
-      {particles.map((particle, index) => (
+    <div 
+      className="fixed inset-0 pointer-events-none z-50"
+      aria-hidden="true"
+    >
+      {pieces.map((piece) => (
         <div
-          key={index}
-          className="absolute rounded-sm"
+          key={piece.id}
+          className="absolute animate-confetti"
           style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            backgroundColor: particle.color,
-            transform: `rotate(${particle.rotation}deg)`,
-            opacity: Math.max(0, Math.min(1, (100 - particle.y) / 100))
+            left: `${piece.x}%`,
+            top: `${piece.y}%`,
+            transform: `rotate(${piece.rotation}deg) scale(${piece.scale})`,
+            transformOrigin: 'center center',
+            animationDelay: `${piece.animationDelay}ms`,
+            width: '10px',
+            height: '10px',
+            opacity: 0,
           }}
-        />
+        >
+          {piece.shape === 'circle' && (
+            <div 
+              className="w-full h-full rounded-full" 
+              style={{ backgroundColor: piece.color }}
+            />
+          )}
+          {piece.shape === 'square' && (
+            <div 
+              className="w-full h-full" 
+              style={{ backgroundColor: piece.color }}
+            />
+          )}
+          {piece.shape === 'triangle' && (
+            <div 
+              className="w-0 h-0" 
+              style={{ 
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderBottom: `10px solid ${piece.color}`,
+              }}
+            />
+          )}
+        </div>
       ))}
     </div>
   );
