@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Menu, X, UserPlus, Edit, Map, BarChart, Trophy } from 'lucide-react';
+import { Menu, X, UserPlus, Edit, Map, BarChart, Trophy, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -67,6 +67,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div onClick={onClose} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                   <UserPlus className="h-4 w-4" />
                   <span>Character Creation</span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link href="/race-management">
+                <div onClick={onClose} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                  <Users className="h-4 w-4" />
+                  <span>Race Management</span>
                 </div>
               </Link>
             </li>
