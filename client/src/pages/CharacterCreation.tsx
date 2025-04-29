@@ -7,12 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { UserPlus, Plus, ArrowLeft, Save, Trash2 } from "lucide-react";
+import { UserPlus, Plus, ArrowLeft, Save, Trash2, ChevronRight, FileImage } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useEditor } from "@/hooks/use-editor";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Character interface with the requested fields
 interface Character {
@@ -22,7 +32,10 @@ interface Character {
   pronunciation: string;
   aliases: string;
   age: string;
+  race: string;
   eyeColor: string;
+  secondEyeColor: string; // For heterochromic eyes
+  hasHeterochromia: boolean; // Flag for heterochromic eyes
   hairColor: string;
   skinColor: string;
   height: string;
@@ -42,6 +55,8 @@ interface Character {
   contradictions: string;
   dreams: string;
   sacrificeForDreams: string;
+  values: string; // New field for character values
+  antiValues: string; // New field for character anti-values
   
   // Evolution
   motivationEvolution: string;
@@ -59,7 +74,10 @@ const defaultCharacter: Omit<Character, 'id' | 'createdAt'> = {
   pronunciation: "",
   aliases: "",
   age: "",
+  race: "",
   eyeColor: "#6b8e23", // Default olive green
+  secondEyeColor: "#4169e1", // Default royal blue
+  hasHeterochromia: false,
   hairColor: "#8b4513", // Default brown
   skinColor: "#f5deb3", // Default wheat/tan
   height: "",
@@ -77,6 +95,8 @@ const defaultCharacter: Omit<Character, 'id' | 'createdAt'> = {
   contradictions: "",
   dreams: "",
   sacrificeForDreams: "",
+  values: "",
+  antiValues: "",
   
   motivationEvolution: "",
   emotionalEvolution: "",
@@ -84,13 +104,26 @@ const defaultCharacter: Omit<Character, 'id' | 'createdAt'> = {
   dreamEvolution: ""
 };
 
+// Interface for Race
+interface Race {
+  id: string;
+  name: string;
+  lore: string;
+  imageData: string; // Base64 encoded image
+  createdAt: Date;
+}
+
 export default function CharacterCreation() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [races, setRaces] = useState<Race[]>([]);
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
+  const [editingRace, setEditingRace] = useState<Race | null>(null);
+  const [showRaceCreator, setShowRaceCreator] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [completionPercentage, setCompletionPercentage] = useState(0);
   
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -168,6 +201,75 @@ export default function CharacterCreation() {
     });
   };
 
+  // Load races from localStorage on mount
+  useEffect(() => {
+    const savedRaces = localStorage.getItem('races');
+    if (savedRaces) {
+      try {
+        const parsed = JSON.parse(savedRaces);
+        setRaces(parsed);
+      } catch (e) {
+        console.error('Failed to parse saved races:', e);
+      }
+    }
+  }, []);
+
+  // Save races to localStorage when updated
+  useEffect(() => {
+    if (races.length > 0) {
+      localStorage.setItem('races', JSON.stringify(races));
+    }
+  }, [races]);
+  
+  // Calculate character completion percentage
+  useEffect(() => {
+    if (!editingCharacter) return;
+    
+    // Count total fields and filled fields
+    const totalFields = 25; // Update this number if you add/remove fields
+    let filledFields = 0;
+    
+    // Basic Info
+    if (editingCharacter.name) filledFields++;
+    if (editingCharacter.pronunciation) filledFields++;
+    if (editingCharacter.aliases) filledFields++;
+    if (editingCharacter.age) filledFields++;
+    if (editingCharacter.race) filledFields++;
+    if (editingCharacter.height) filledFields++;
+    if (editingCharacter.bodyType) filledFields++;
+    
+    // Colors (these are always filled with default values)
+    filledFields += 2; // eyeColor and hairColor
+    if (editingCharacter.hasHeterochromia) filledFields++; // secondEyeColor
+    
+    // Behavior
+    if (editingCharacter.attitude) filledFields++;
+    if (editingCharacter.bodyLanguage) filledFields++;
+    if (editingCharacter.bodySigns) filledFields++;
+    
+    // Personal
+    if (editingCharacter.parentalRelationship) filledFields++;
+    if (editingCharacter.parentalTeachings) filledFields++;
+    if (editingCharacter.respect) filledFields++;
+    if (editingCharacter.hates) filledFields++;
+    if (editingCharacter.fears) filledFields++;
+    if (editingCharacter.contradictions) filledFields++;
+    if (editingCharacter.dreams) filledFields++;
+    if (editingCharacter.sacrificeForDreams) filledFields++;
+    if (editingCharacter.values) filledFields++;
+    if (editingCharacter.antiValues) filledFields++;
+    
+    // Evolution
+    if (editingCharacter.motivationEvolution) filledFields++;
+    if (editingCharacter.emotionalEvolution) filledFields++;
+    if (editingCharacter.relationshipEvolution) filledFields++;
+    if (editingCharacter.dreamEvolution) filledFields++;
+    
+    // Calculate percentage
+    const percentage = Math.round((filledFields / totalFields) * 100);
+    setCompletionPercentage(percentage);
+  }, [editingCharacter]);
+
   const handleInputChange = (field: string, value: string) => {
     if (!editingCharacter) return;
     
@@ -175,6 +277,88 @@ export default function CharacterCreation() {
       ...editingCharacter,
       [field]: value
     });
+  };
+  
+  const handleBooleanToggle = (field: string, value: boolean) => {
+    if (!editingCharacter) return;
+    
+    setEditingCharacter({
+      ...editingCharacter,
+      [field]: value
+    });
+  };
+  
+  const createNewRace = () => {
+    const newRace: Race = {
+      id: Date.now().toString(),
+      name: "",
+      lore: "",
+      imageData: "",
+      createdAt: new Date()
+    };
+    
+    setEditingRace(newRace);
+    setShowRaceCreator(true);
+  };
+  
+  const saveRace = () => {
+    if (!editingRace) return;
+    
+    if (editingRace.id && races.some(r => r.id === editingRace.id)) {
+      // Update existing race
+      setRaces(races.map(r => r.id === editingRace.id ? editingRace : r));
+    } else {
+      // Add new race
+      setRaces([...races, editingRace]);
+    }
+    
+    toast({
+      title: "Race Saved",
+      description: `${editingRace.name} has been saved successfully.`
+    });
+    
+    setEditingRace(null);
+    setShowRaceCreator(false);
+  };
+  
+  const deleteRace = (id: string) => {
+    setRaces(races.filter(r => r.id !== id));
+    
+    if (editingRace && editingRace.id === id) {
+      setEditingRace(null);
+      setShowRaceCreator(false);
+    }
+    
+    toast({
+      title: "Race Deleted",
+      description: "The race has been deleted successfully."
+    });
+  };
+  
+  const handleRaceInputChange = (field: string, value: string) => {
+    if (!editingRace) return;
+    
+    setEditingRace({
+      ...editingRace,
+      [field]: value
+    });
+  };
+  
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    if (!editingRace) return;
+    
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      setEditingRace({
+        ...editingRace,
+        imageData: reader.result as string
+      });
+    };
+    
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -306,27 +490,43 @@ export default function CharacterCreation() {
               ) : (
                 <Card>
                   <CardHeader className="pb-4 border-b">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <Input
-                          className="text-2xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
-                          placeholder="Character Name"
-                          value={editingCharacter.name}
-                          onChange={(e) => handleInputChange('name', e.target.value)}
-                        />
-                        {editingCharacter.aliases && (
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Also known as: {editingCharacter.aliases}
-                          </div>
-                        )}
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <Input
+                            className="text-2xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
+                            placeholder="Character Name"
+                            value={editingCharacter.name}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                          />
+                          {editingCharacter.aliases && (
+                            <div className="text-sm text-muted-foreground mt-1">
+                              Also known as: {editingCharacter.aliases}
+                            </div>
+                          )}
+                        </div>
+                        <Button 
+                          variant="default" 
+                          onClick={saveCharacter}
+                        >
+                          <Save className="h-4 w-4 mr-1.5" />
+                          Save Character
+                        </Button>
                       </div>
-                      <Button 
-                        variant="default" 
-                        onClick={saveCharacter}
-                      >
-                        <Save className="h-4 w-4 mr-1.5" />
-                        Save Character
-                      </Button>
+                      
+                      {/* Character completion progress */}
+                      <div className="w-full space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Character Completion</span>
+                          <span>{completionPercentage}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary transition-all duration-500 rounded-full" 
+                            style={{ width: `${completionPercentage}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </CardHeader>
                   
@@ -381,25 +581,109 @@ export default function CharacterCreation() {
                               onChange={(e) => handleInputChange('age', e.target.value)}
                             />
                           </div>
+                        
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <Label htmlFor="race" className="block">Race</Label>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={createNewRace}
+                              >
+                                Create new
+                              </Button>
+                            </div>
+                            <Select 
+                              value={editingCharacter.race} 
+                              onValueChange={(value) => handleInputChange('race', value)}
+                            >
+                              <SelectTrigger id="race">
+                                <SelectValue placeholder="Select a race" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {races.length === 0 ? (
+                                  <div className="text-center py-4 text-muted-foreground">
+                                    <p className="text-sm">No races created yet</p>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="mt-2"
+                                      onClick={() => {
+                                        // Close the select dropdown and open race creator
+                                        document.body.click(); // Hack to close the dropdown
+                                        setTimeout(createNewRace, 100);
+                                      }}
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Create Race
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  races.map(race => (
+                                    <SelectItem key={race.id} value={race.name}>
+                                      {race.name}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                         
                         <Separator />
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <div>
-                            <Label htmlFor="eyeColor" className="block mb-2">Eye Color</Label>
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-8 h-8 rounded-full border" 
-                                style={{ backgroundColor: editingCharacter.eyeColor }}
-                              />
-                              <Input
-                                id="eyeColor"
-                                type="color"
-                                value={editingCharacter.eyeColor}
-                                onChange={(e) => handleInputChange('eyeColor', e.target.value)}
-                                className="w-full"
-                              />
+                            <div className="flex justify-between items-center mb-2">
+                              <Label htmlFor="eyeColor">Eye Color</Label>
+                              <div className="flex items-center">
+                                <Label htmlFor="hasHeterochromia" className="text-sm mr-2 cursor-pointer">
+                                  Heterochromia
+                                </Label>
+                                <input 
+                                  type="checkbox" 
+                                  id="hasHeterochromia"
+                                  checked={editingCharacter.hasHeterochromia}
+                                  onChange={(e) => handleBooleanToggle('hasHeterochromia', e.target.checked)}
+                                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-8 h-8 rounded-full border" 
+                                  style={{ backgroundColor: editingCharacter.eyeColor }}
+                                />
+                                <Input
+                                  id="eyeColor"
+                                  type="color"
+                                  value={editingCharacter.eyeColor}
+                                  onChange={(e) => handleInputChange('eyeColor', e.target.value)}
+                                  className="w-full"
+                                />
+                                <span className="text-sm">{editingCharacter.hasHeterochromia ? 'Left' : ''}</span>
+                              </div>
+                              
+                              {editingCharacter.hasHeterochromia && (
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="w-8 h-8 rounded-full border" 
+                                    style={{ backgroundColor: editingCharacter.secondEyeColor }}
+                                  />
+                                  <Input
+                                    id="secondEyeColor"
+                                    type="color"
+                                    value={editingCharacter.secondEyeColor}
+                                    onChange={(e) => handleInputChange('secondEyeColor', e.target.value)}
+                                    className="w-full"
+                                  />
+                                  <span className="text-sm">Right</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           
