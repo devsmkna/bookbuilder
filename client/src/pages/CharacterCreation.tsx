@@ -119,8 +119,7 @@ export default function CharacterCreation() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
-  const [editingRace, setEditingRace] = useState<Race | null>(null);
-  const [showRaceCreator, setShowRaceCreator] = useState(false);
+  // Race management is now handled in a dedicated page
   const [activeTab, setActiveTab] = useState("basic");
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [completionPercentage, setCompletionPercentage] = useState(0);
@@ -203,7 +202,7 @@ export default function CharacterCreation() {
 
   // Load races from localStorage on mount
   useEffect(() => {
-    const savedRaces = localStorage.getItem('races');
+    const savedRaces = localStorage.getItem('book-builder-races');
     if (savedRaces) {
       try {
         const parsed = JSON.parse(savedRaces);
@@ -213,13 +212,6 @@ export default function CharacterCreation() {
       }
     }
   }, []);
-
-  // Save races to localStorage when updated
-  useEffect(() => {
-    if (races.length > 0) {
-      localStorage.setItem('races', JSON.stringify(races));
-    }
-  }, [races]);
   
   // Calculate character completion percentage
   useEffect(() => {
@@ -289,163 +281,24 @@ export default function CharacterCreation() {
   };
   
   const createNewRace = () => {
-    const newRace: Race = {
-      id: Date.now().toString(),
-      name: "",
-      lore: "",
-      imageData: "",
-      createdAt: new Date()
-    };
-    
-    setEditingRace(newRace);
-    setShowRaceCreator(true);
-  };
-  
-  const saveRace = () => {
-    if (!editingRace) return;
-    
-    if (editingRace.id && races.some(r => r.id === editingRace.id)) {
-      // Update existing race
-      setRaces(races.map(r => r.id === editingRace.id ? editingRace : r));
-    } else {
-      // Add new race
-      setRaces([...races, editingRace]);
+    // Save current character state to avoid data loss
+    if (editingCharacter && isCreatingNew) {
+      saveCharacter();
     }
     
-    toast({
-      title: "Race Saved",
-      description: `${editingRace.name} has been saved successfully.`
-    });
-    
-    setEditingRace(null);
-    setShowRaceCreator(false);
-  };
-  
-  const deleteRace = (id: string) => {
-    setRaces(races.filter(r => r.id !== id));
-    
-    if (editingRace && editingRace.id === id) {
-      setEditingRace(null);
-      setShowRaceCreator(false);
-    }
+    // Navigate to race management page
+    navigate('/race-management');
     
     toast({
-      title: "Race Deleted",
-      description: "The race has been deleted successfully."
+      title: "Race Management",
+      description: "Create your new race in the Race Management section.",
     });
   };
   
-  const handleRaceInputChange = (field: string, value: string) => {
-    if (!editingRace) return;
-    
-    setEditingRace({
-      ...editingRace,
-      [field]: value
-    });
-  };
-  
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    if (!editingRace) return;
-    
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    
-    reader.onloadend = () => {
-      setEditingRace({
-        ...editingRace,
-        imageData: reader.result as string
-      });
-    };
-    
-    reader.readAsDataURL(file);
-  };
+  // Race management functions have been moved to RaceManagement.tsx
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Race Creation Dialog */}
-      <Dialog open={showRaceCreator} onOpenChange={setShowRaceCreator}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{editingRace?.id && races.some(r => r.id === editingRace.id) ? "Edit" : "Create New"} Race</DialogTitle>
-            <DialogDescription>
-              Create a new race for your world. Races can be assigned to characters.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {editingRace && (
-            <div className="grid gap-6 py-4">
-              <div>
-                <Label htmlFor="raceName" className="block mb-2">Race Name</Label>
-                <Input
-                  id="raceName"
-                  placeholder="e.g., Elf, Dwarf, Human, etc."
-                  value={editingRace.name}
-                  onChange={(e) => handleRaceInputChange('name', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="raceLore" className="block mb-2">Race Lore</Label>
-                <Textarea
-                  id="raceLore"
-                  placeholder="Describe the race's history, culture, and characteristics..."
-                  className="h-40"
-                  value={editingRace.lore}
-                  onChange={(e) => handleRaceInputChange('lore', e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="raceImage" className="block mb-2">Race Image</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="border rounded-md p-2 flex items-center justify-center bg-muted/30 relative">
-                    {editingRace.imageData ? (
-                      <img
-                        src={editingRace.imageData}
-                        alt={editingRace.name || "Race image"}
-                        className="max-h-[200px] max-w-full object-contain"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
-                        <FileImage className="h-10 w-10 mb-2 opacity-20" />
-                        <p className="text-sm">No image uploaded</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <Input
-                      id="raceImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="mb-4"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Upload an image to represent this race. Recommended size: 400x400px.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditingRace(null);
-                setShowRaceCreator(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={saveRace}>
-              Save Race
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -688,9 +541,9 @@ export default function CharacterCreation() {
                                       size="sm"
                                       className="mt-2"
                                       onClick={() => {
-                                        // Close the select dropdown and open race creator
+                                        // Close the select dropdown and navigate to race management
                                         document.body.click(); // Hack to close the dropdown
-                                        setTimeout(createNewRace, 100);
+                                        setTimeout(() => navigate('/race-management'), 100);
                                       }}
                                     >
                                       <Plus className="h-3 w-3 mr-1" />
