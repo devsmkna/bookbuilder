@@ -211,4 +211,59 @@
   .animate-confetti {
     animation: confetti-fall 4s ease-out forwards;
   }
+  
+  /* Wiki-style links styling */
+  .wiki-link {
+    @apply text-accent font-medium cursor-pointer underline-offset-2 hover:underline transition-colors;
+  }
+  
+  .wiki-link-not-found {
+    @apply text-muted border-b border-dashed border-muted hover:border-accent;
+  }
+  
+  /* WYSIWYG mode styling */
+  .editor-wysiwyg {
+    @apply min-h-[70vh] outline-none;
+    line-height: 1.7;
+  }
+  
+  .editor-wysiwyg h1 {
+    @apply text-3xl mt-6 mb-4 font-bold;
+  }
+  
+  .editor-wysiwyg h2 {
+    @apply text-2xl mt-5 mb-3 font-semibold;
+  }
+  
+  .editor-wysiwyg h3 {
+    @apply text-xl mt-4 mb-2 font-medium;
+  }
+  
+  .editor-wysiwyg a:not(.wiki-link) {
+    @apply text-accent underline hover:text-accent/80 transition-colors;
+  }
+  
+  .editor-wysiwyg blockquote {
+    @apply border-l-4 border-muted pl-4 py-0.5 my-4 text-muted-foreground italic;
+  }
+  
+  .editor-wysiwyg ul {
+    @apply list-disc pl-6 my-4;
+  }
+  
+  .editor-wysiwyg ol {
+    @apply list-decimal pl-6 my-4;
+  }
+  
+  .editor-wysiwyg code {
+    @apply font-mono bg-muted/20 px-1.5 py-0.5 rounded text-sm;
+  }
+  
+  .editor-wysiwyg pre {
+    @apply bg-muted/20 p-4 rounded-md my-4 overflow-x-auto;
+  }
+  
+  .editor-wysiwyg pre code {
+    @apply p-0 bg-transparent;
+  }
 }

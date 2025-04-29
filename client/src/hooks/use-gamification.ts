@@ -49,7 +49,9 @@ const getStoredAchievements = () => {
   }
 };
 
-export function useGamification(): GamificationState {
+export function useGamification(): GamificationState & {
+  updateStats: (newStats: Partial<GamificationState['stats']>) => void;
+} {
   // Initialize stats from localStorage or default values
   const [stats, setStats] = useState(() => {
     const storedStats = getStoredStats();
@@ -63,6 +65,14 @@ export function useGamification(): GamificationState {
       longestWriteStreak: 0
     };
   });
+  
+  // Function to update stats
+  const updateStats = useCallback((newStats: Partial<GamificationState['stats']>) => {
+    setStats(prev => ({
+      ...prev,
+      ...newStats
+    }));
+  }, []);
   
   // Initialize achievements from localStorage or default values
   const [achievements, setAchievements] = useState(() => {
@@ -177,6 +187,7 @@ export function useGamification(): GamificationState {
     percentToNextLevel,
     recentAchievements,
     showLevelUp,
-    resetLevelUpNotification
+    resetLevelUpNotification,
+    updateStats
   };
 }

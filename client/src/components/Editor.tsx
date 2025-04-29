@@ -102,21 +102,72 @@ export default function Editor() {
         toggleFullscreen={toggleFullscreen}
         isDarkTheme={isDarkTheme}
         toggleTheme={toggleTheme}
+        isWysiwygMode={isWysiwygMode}
+        toggleEditorMode={toggleEditorMode}
         onOpenSidebar={handleOpenSidebar}
       />
       
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto max-w-4xl px-4 py-6">
           <div className="relative bg-card rounded-lg shadow-sm">
+            {/* Wiki-style editor toolbar */}
+            <div className="border-b border-border p-2 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => formatSelectedText('bold')}
+                >
+                  <span className="font-bold">B</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => formatSelectedText('italic')}
+                >
+                  <span className="italic">I</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => formatSelectedText('code')}
+                >
+                  <span className="font-mono">`</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-xs"
+                  onClick={createWikiLink}
+                  title="Create wiki link (Ctrl+K/Cmd+K)"
+                >
+                  <Link2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {isWysiwygMode ? "WYSIWYG Mode" : "Markdown Mode"}
+              </div>
+            </div>
+            
+            {/* Floating format menu for selections */}
             <FormatMenu 
               isVisible={formatMenuProps.isVisible}
               position={formatMenuProps.position}
               onFormat={formatSelectedText}
             />
+            
+            {/* Editor content */}
             <EditorContent 
               ref={editorRef}
               content={content}
               onChange={setContent}
+              renderedContent={renderedContent}
+              isWysiwygMode={isWysiwygMode}
+              linkedEntities={linkedEntities}
+              onCreateWikiLink={createWikiLink}
             />
           </div>
         </div>
