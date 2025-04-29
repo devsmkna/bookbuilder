@@ -76,14 +76,34 @@ export default function Editor() {
   useEffect(() => {
     // Save content before user navigates away
     const handleBeforeNavigate = () => {
-      saveTemporaryContent();
+      // Use direct localStorage save for ultimate reliability
+      if (content) {
+        localStorage.setItem('editor-content', content);
+      }
     };
 
+    // Save when leaving the page
     window.addEventListener('beforeunload', handleBeforeNavigate);
+    
+    // Save on every route change within the app
+    window.addEventListener('popstate', handleBeforeNavigate);
+    
+    // Save before component unmounts (e.g., when changing tab)
     return () => {
+      handleBeforeNavigate(); // Save on unmount
       window.removeEventListener('beforeunload', handleBeforeNavigate);
+      window.removeEventListener('popstate', handleBeforeNavigate);
     };
-  }, [saveTemporaryContent]);
+  }, [content]);
+  
+  // When component mounts, restore content
+  useEffect(() => {
+    // This handles the case when we return to the editor page
+    const savedContent = localStorage.getItem('editor-content');
+    if (savedContent && savedContent !== content) {
+      setContent(savedContent);
+    }
+  }, []);
 
   const handleOpenSidebar = () => {
     setIsSidebarOpen(true);

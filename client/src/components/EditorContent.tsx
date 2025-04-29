@@ -263,11 +263,17 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
       }
     };
     
-    // When in WYSIWYG mode, we render a preview div with the rendered content
+    // When in WYSIWYG mode and we have rendered content, show the preview
     if (isWysiwygMode && renderedContent) {
+      // Create a class name that includes common styles plus mode-specific ones
+      const wysiwygClassName = cn(
+        "editor-wysiwyg p-6 whitespace-pre-wrap",
+        "min-h-[70vh] outline-none"
+      );
+      
       return (
         <div 
-          className="editor-wysiwyg p-6 whitespace-pre-wrap"
+          className={wysiwygClassName}
           onClick={handleWikiLinkClick}
           dangerouslySetInnerHTML={{ __html: renderedContent }}
         />
@@ -280,6 +286,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
         ref={editorRef}
         className={cn(
           "editor-content p-6 whitespace-pre-wrap",
+          "min-h-[70vh] outline-none",
           isWysiwygMode ? "hidden" : "block"
         )}
         contentEditable={true}
@@ -291,8 +298,11 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
         data-placeholder="Start typing, or paste Markdown content..."
+        // Set initial content when mounting in markdown mode
+        // This will ensure the content is displayed when switching from WYSIWYG
+        dangerouslySetInnerHTML={!isWysiwygMode && content ? { __html: content } : undefined}
       >
-        {placeholderShown && (
+        {placeholderShown && content === "" && (
           <div className="placeholder">Start typing, or paste Markdown content...</div>
         )}
       </div>

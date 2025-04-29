@@ -17,7 +17,13 @@ interface FormatMenuProps {
 }
 
 export function useEditor() {
-  const [content, setContent] = useState<string>("");
+  // Initialize content from localStorage or empty string
+  const [content, setContent] = useState<string>(() => {
+    // Try to load saved content first
+    const savedContent = localStorage.getItem('editor-content');
+    return savedContent || "";
+  });
+  
   const [selection, setSelection] = useState<Selection | null>(null);
   const [isFormatMenuVisible, setIsFormatMenuVisible] = useState(false);
   const [formatMenuPosition, setFormatMenuPosition] = useState({ top: 0, left: 0 });
@@ -45,11 +51,16 @@ export function useEditor() {
     }
   }, [prefersDark]);
 
-  // Update word and character count when content changes
+  // Update word and character count when content changes and auto-save
   useEffect(() => {
     const { words, chars } = countWordsAndChars(content);
     setWordCount(words);
     setCharCount(chars);
+    
+    // Auto-save content whenever it changes
+    if (content) {
+      localStorage.setItem('editor-content', content);
+    }
   }, [content]);
   
   // Load linked entities (characters and places)
@@ -256,8 +267,17 @@ export function useEditor() {
   
   // Toggle between raw markdown and WYSIWYG mode
   const toggleEditorMode = useCallback(() => {
+    // Save current content before toggling mode to ensure it persists
+    if (content) {
+      localStorage.setItem('editor-content', content);
+    }
+    
+    // Toggle the mode
     setIsWysiwygMode(prev => !prev);
-  }, []);
+    
+    // Force re-process content for wiki links
+    processContent();
+  }, [content, processContent]);
   
   // Handle adding a wiki link by selecting text and converting to [[text]]
   const createWikiLink = useCallback(() => {
