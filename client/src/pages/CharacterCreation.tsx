@@ -363,6 +363,90 @@ export default function CharacterCreation() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Race Creation Dialog */}
+      <Dialog open={showRaceCreator} onOpenChange={setShowRaceCreator}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{editingRace?.id && races.some(r => r.id === editingRace.id) ? "Edit" : "Create New"} Race</DialogTitle>
+            <DialogDescription>
+              Create a new race for your world. Races can be assigned to characters.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingRace && (
+            <div className="grid gap-6 py-4">
+              <div>
+                <Label htmlFor="raceName" className="block mb-2">Race Name</Label>
+                <Input
+                  id="raceName"
+                  placeholder="e.g., Elf, Dwarf, Human, etc."
+                  value={editingRace.name}
+                  onChange={(e) => handleRaceInputChange('name', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="raceLore" className="block mb-2">Race Lore</Label>
+                <Textarea
+                  id="raceLore"
+                  placeholder="Describe the race's history, culture, and characteristics..."
+                  className="h-40"
+                  value={editingRace.lore}
+                  onChange={(e) => handleRaceInputChange('lore', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="raceImage" className="block mb-2">Race Image</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-md p-2 flex items-center justify-center bg-muted/30 relative">
+                    {editingRace.imageData ? (
+                      <img
+                        src={editingRace.imageData}
+                        alt={editingRace.name || "Race image"}
+                        className="max-h-[200px] max-w-full object-contain"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
+                        <FileImage className="h-10 w-10 mb-2 opacity-20" />
+                        <p className="text-sm">No image uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <Input
+                      id="raceImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="mb-4"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Upload an image to represent this race. Recommended size: 400x400px.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingRace(null);
+                setShowRaceCreator(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={saveRace}>
+              Save Race
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
@@ -878,6 +962,30 @@ export default function CharacterCreation() {
                             />
                           </div>
                         </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <Label htmlFor="values" className="block mb-2">Values</Label>
+                            <Textarea
+                              id="values"
+                              placeholder="What principles, ideals, or beliefs they hold dear..."
+                              className="h-24"
+                              value={editingCharacter.values}
+                              onChange={(e) => handleInputChange('values', e.target.value)}
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="antiValues" className="block mb-2">Anti-Values</Label>
+                            <Textarea
+                              id="antiValues"
+                              placeholder="Principles or behaviors they strongly oppose..."
+                              className="h-24"
+                              value={editingCharacter.antiValues}
+                              onChange={(e) => handleInputChange('antiValues', e.target.value)}
+                            />
+                          </div>
+                        </div>
                       </TabsContent>
                       
                       {/* Evolution Tab */}
@@ -933,19 +1041,52 @@ export default function CharacterCreation() {
                   </CardContent>
                   
                   <CardFooter className="flex justify-between border-t pt-6">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setEditingCharacter(null)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      onClick={saveCharacter}
-                    >
-                      <Save className="h-4 w-4 mr-1.5" />
-                      Save Character
-                    </Button>
+                    <div>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setEditingCharacter(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      {activeTab !== "basic" && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            // Navigate to previous tab based on current tab
+                            if (activeTab === "behavior") setActiveTab("basic");
+                            else if (activeTab === "personal") setActiveTab("behavior");
+                            else if (activeTab === "evolution") setActiveTab("personal");
+                          }}
+                        >
+                          Previous
+                        </Button>
+                      )}
+                      
+                      {activeTab !== "evolution" ? (
+                        <Button 
+                          variant="default" 
+                          onClick={() => {
+                            // Navigate to next tab based on current tab
+                            if (activeTab === "basic") setActiveTab("behavior");
+                            else if (activeTab === "behavior") setActiveTab("personal");
+                            else if (activeTab === "personal") setActiveTab("evolution");
+                          }}
+                        >
+                          Next <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="default" 
+                          onClick={saveCharacter}
+                        >
+                          <Save className="h-4 w-4 mr-1.5" />
+                          Save Character
+                        </Button>
+                      )}
+                    </div>
                   </CardFooter>
                 </Card>
               )}
