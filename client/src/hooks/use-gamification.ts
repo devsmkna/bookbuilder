@@ -68,7 +68,7 @@ export function useGamification(): GamificationState & {
   
   // Function to update stats
   const updateStats = useCallback((newStats: Partial<GamificationState['stats']>) => {
-    setStats(prev => ({
+    setStats((prev: GamificationState['stats']) => ({
       ...prev,
       ...newStats
     }));

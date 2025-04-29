@@ -298,10 +298,8 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
         data-placeholder="Start typing, or paste Markdown content..."
-        // Set initial content when mounting in markdown mode
-        // This will ensure the content is displayed when switching from WYSIWYG
-        dangerouslySetInnerHTML={!isWysiwygMode && content ? { __html: content } : undefined}
       >
+        {!isWysiwygMode && content ? content : null}
         {placeholderShown && content === "" && (
           <div className="placeholder">Start typing, or paste Markdown content...</div>
         )}

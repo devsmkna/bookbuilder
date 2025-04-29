@@ -294,10 +294,23 @@ export default function RaceManagement() {
                             setActiveTab("info");
                           }}
                         >
-                          <div>
-                            <div className="font-medium">{race.name || "Unnamed Race"}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Last modified: {new Date(race.lastModified).toLocaleDateString()}
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                              {race.imageData ? (
+                                <img 
+                                  src={race.imageData} 
+                                  alt={race.name || "Race image"} 
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <UserPlus className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium">{race.name || "Unnamed Race"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Last modified: {new Date(race.lastModified).toLocaleDateString()}
+                              </div>
                             </div>
                           </div>
                           <Button 
