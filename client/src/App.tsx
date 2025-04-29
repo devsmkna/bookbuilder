@@ -8,6 +8,7 @@ import CharacterCreation from "@/pages/CharacterCreation";
 import WorldBuilding from "@/pages/WorldBuilding";
 import Dashboard from "@/pages/Dashboard";
 import RaceManagement from "@/pages/RaceManagement";
+import StoryboardPlanner from "@/pages/StoryboardPlanner";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { GamificationProvider } from "@/context/GamificationContext";
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/world-building" component={WorldBuilding} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/race-management" component={RaceManagement} />
+      <Route path="/storyboard-planner" component={StoryboardPlanner} />
       <Route component={NotFound} />
     </Switch>
   );
