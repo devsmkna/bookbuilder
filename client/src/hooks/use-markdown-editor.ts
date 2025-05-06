@@ -175,18 +175,20 @@ export function useMarkdownEditor() {
     });
   }, []);
   
-  // Salva la posizione temporanea quando si cambia pagina
+  // Salva il contenuto dell'editor
   const saveTemporaryContent = useCallback(() => {
-    localStorage.setItem('temp-document-content', content);
+    // Salviamo il contenuto in localStorage così persiste tra le navigazioni
+    localStorage.setItem('editor-content', content);
   }, [content]);
   
   // Ripristina il contenuto temporaneo
   const restoreTemporaryContent = useCallback(() => {
-    const tempContent = localStorage.getItem('temp-document-content');
-    if (tempContent) {
-      setContent(tempContent);
+    // Carica il contenuto da localStorage
+    const savedContent = localStorage.getItem('editor-content');
+    if (savedContent) {
+      setContent(savedContent);
     }
-  }, []);
+  }, [setContent]);
   
   // Gestisce i cambiamenti di selezione del testo
   const handleSelectionChange = useCallback(() => {

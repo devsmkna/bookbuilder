@@ -76,8 +76,56 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
       
       <div className="entity-list max-h-64 overflow-y-auto p-1">
         {Object.keys(groupedEntities).length === 0 ? (
-          <div className="py-3 px-4 text-center text-sm text-muted-foreground">
-            Nessun risultato trovato
+          <div className="py-3 px-4 text-center text-sm">
+            <p className="text-muted-foreground mb-2">
+              Nessun risultato trovato. Prima crea dei personaggi, luoghi, razze o eventi.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center mt-3">
+              <a 
+                href="/character-creation" 
+                className="px-2 py-1 text-xs bg-blue-500/10 text-blue-500 rounded-sm hover:bg-blue-500/20 flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/character-creation";
+                }}
+              >
+                <User className="h-3 w-3 mr-1" />
+                Personaggio
+              </a>
+              <a 
+                href="/world-building" 
+                className="px-2 py-1 text-xs bg-green-500/10 text-green-500 rounded-sm hover:bg-green-500/20 flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/world-building";
+                }}
+              >
+                <MapPin className="h-3 w-3 mr-1" />
+                Luogo
+              </a>
+              <a 
+                href="/race-management" 
+                className="px-2 py-1 text-xs bg-amber-500/10 text-amber-500 rounded-sm hover:bg-amber-500/20 flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/race-management";
+                }}
+              >
+                <Users className="h-3 w-3 mr-1" />
+                Razza
+              </a>
+              <a 
+                href="/storyboard-planner" 
+                className="px-2 py-1 text-xs bg-purple-500/10 text-purple-500 rounded-sm hover:bg-purple-500/20 flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/storyboard-planner";
+                }}
+              >
+                <CalendarDays className="h-3 w-3 mr-1" />
+                Evento
+              </a>
+            </div>
           </div>
         ) : (
           Object.entries(groupedEntities).map(([type, entities]) => (
