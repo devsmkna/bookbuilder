@@ -5,6 +5,7 @@ import EntityMenu from "./EntityMenu";
 import EntityTooltip from "./EntityTooltip";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
@@ -14,8 +15,15 @@ import {
   Code, 
   Link2, 
   Heading1, 
+  Heading2,
+  Heading3,
   FileText, 
-  Eye 
+  Eye,
+  List,
+  ListOrdered,
+  Underline,
+  Strikethrough,
+  Quote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import "./editor-styles.css";
@@ -111,7 +119,7 @@ const MarkdownEditor: React.FC = () => {
     }
   };
   
-  // Gestico il click sui link alle entità nell'anteprima
+  // Gestisce il click sui link alle entità nell'anteprima
   const handleEntityLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     
@@ -251,7 +259,7 @@ const MarkdownEditor: React.FC = () => {
           <div className="editor-container bg-card rounded-lg shadow-sm border overflow-hidden">
             {/* Toolbar dell'editor */}
             <div className="editor-toolbar p-2 border-b flex items-center justify-between">
-              <div className="format-buttons flex space-x-1">
+              <div className="format-buttons flex flex-wrap gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -271,24 +279,74 @@ const MarkdownEditor: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => applyFormatting("underline")}
+                  title="Sottolineato"
+                >
+                  <Underline className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => applyFormatting("strikethrough")}
+                  title="Barrato"
+                >
+                  <Strikethrough className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => applyFormatting("code")}
                   title="Codice (Ctrl+K)"
                 >
                   <Code className="h-4 w-4" />
                 </Button>
+                <Separator orientation="vertical" className="h-8 mx-1" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => applyFormatting("h1")}
-                  title="Intestazione 1"
+                  title="Titolo 1"
                 >
                   <Heading1 className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => applyFormatting("h2")}
+                  title="Titolo 2"
+                >
+                  <Heading2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => applyFormatting("h3")}
+                  title="Titolo 3"
+                >
+                  <Heading3 className="h-4 w-4" />
+                </Button>
+                <Separator orientation="vertical" className="h-8 mx-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => applyFormatting("unordered-list")}
+                  title="Elenco puntato"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => applyFormatting("ordered-list")}
+                  title="Elenco numerato"
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+                <Separator orientation="vertical" className="h-8 mx-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
                   title="Inserisci @menzione per linkare personaggi, luoghi o razze"
-                  className="ml-2"
                 >
                   <Link2 className="h-4 w-4" />
                   <span className="ml-1 text-xs">@menzione</span>

@@ -7,7 +7,10 @@ import {
   Heading2, 
   Heading3,
   Quote,
-  List
+  List,
+  ListOrdered,
+  Underline,
+  Strikethrough
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,12 +45,15 @@ const FormatMenu: React.FC<FormatMenuProps> = ({ show, position, onFormat }) => 
   const formatOptions = [
     { icon: <Bold className="h-4 w-4" />, label: "Grassetto", format: "bold" },
     { icon: <Italic className="h-4 w-4" />, label: "Corsivo", format: "italic" },
+    { icon: <Underline className="h-4 w-4" />, label: "Sottolineato", format: "underline" },
+    { icon: <Strikethrough className="h-4 w-4" />, label: "Barrato", format: "strikethrough" },
     { icon: <Code className="h-4 w-4" />, label: "Codice", format: "code" },
     { icon: <Heading1 className="h-4 w-4" />, label: "Titolo 1", format: "h1" },
     { icon: <Heading2 className="h-4 w-4" />, label: "Titolo 2", format: "h2" },
     { icon: <Heading3 className="h-4 w-4" />, label: "Titolo 3", format: "h3" },
     { icon: <Quote className="h-4 w-4" />, label: "Citazione", format: "quote" },
-    { icon: <List className="h-4 w-4" />, label: "Elenco", format: "list" }
+    { icon: <List className="h-4 w-4" />, label: "Elenco puntato", format: "unordered-list" },
+    { icon: <ListOrdered className="h-4 w-4" />, label: "Elenco numerato", format: "ordered-list" }
   ];
   
   return (
@@ -62,7 +68,7 @@ const FormatMenu: React.FC<FormatMenuProps> = ({ show, position, onFormat }) => 
         transform: "translate(-50%, 0)" // Centra il menu
       }}
     >
-      <div className="format-buttons grid grid-cols-4 sm:grid-cols-8 gap-1">
+      <div className="format-buttons grid grid-cols-4 sm:grid-cols-11 gap-1">
         {formatOptions.map((option) => (
           <FormatButton
             key={option.format}

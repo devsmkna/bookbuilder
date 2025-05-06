@@ -338,6 +338,12 @@ export function useMarkdownEditor() {
       case "italic":
         formattedText = `*${selectedText}*`;
         break;
+      case "underline":
+        formattedText = `<u>${selectedText}</u>`;
+        break;
+      case "strikethrough":
+        formattedText = `~~${selectedText}~~`;
+        break;
       case "code":
         formattedText = `\`${selectedText}\``;
         break;
@@ -353,8 +359,11 @@ export function useMarkdownEditor() {
       case "quote":
         formattedText = selectedText.split('\n').map(line => `> ${line}`).join('\n');
         break;
-      case "list":
+      case "unordered-list":
         formattedText = selectedText.split('\n').map(line => `- ${line}`).join('\n');
+        break;
+      case "ordered-list":
+        formattedText = selectedText.split('\n').map((line, index) => `${index + 1}. ${line}`).join('\n');
         break;
       default:
         formattedText = selectedText;
@@ -377,7 +386,7 @@ export function useMarkdownEditor() {
       const newPosition = start + formattedText.length;
       textarea.setSelectionRange(newPosition, newPosition);
     }, 0);
-  }, []);
+  }, [setShowFormatMenu]);
   
   // Inserisce un'entità linkata nel testo
   const insertEntityLink = useCallback((entity: LinkedEntity) => {
@@ -459,40 +468,73 @@ export function useMarkdownEditor() {
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
     html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+    html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+    // Il tag <u> è già supportato in HTML
     
     // Blocco citazione
     html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
     
-    // Liste non ordinate (approccio semplificato)
-    const listLines = html.split('\n');
-    let inList = false;
-    let listHtml = '';
+    // Liste non ordinate
+    const unorderedListLines = html.split('\n');
+    let inUnorderedList = false;
+    let unorderedListHtml = '';
     
-    listLines.forEach(line => {
+    unorderedListLines.forEach(line => {
       if (line.match(/^- (.*?)$/)) {
-        if (!inList) {
+        if (!inUnorderedList) {
           // Inizia una nuova lista
-          listHtml += '<ul>';
-          inList = true;
+          unorderedListHtml += '<ul>';
+          inUnorderedList = true;
         }
         const itemContent = line.replace(/^- (.*?)$/, '$1');
-        listHtml += `<li>${itemContent}</li>`;
+        unorderedListHtml += `<li>${itemContent}</li>`;
       } else {
-        if (inList) {
+        if (inUnorderedList) {
           // Chiudi la lista precedente
-          listHtml += '</ul>';
-          inList = false;
+          unorderedListHtml += '</ul>';
+          inUnorderedList = false;
         }
-        listHtml += line + '\n';
+        unorderedListHtml += line + '\n';
       }
     });
     
-    // Chiudi l'ultima lista se necessario
-    if (inList) {
-      listHtml += '</ul>';
+    // Chiudi l'ultima lista non ordinata se necessario
+    if (inUnorderedList) {
+      unorderedListHtml += '</ul>';
     }
     
-    html = listHtml;
+    html = unorderedListHtml;
+    
+    // Liste ordinate
+    const orderedListLines = html.split('\n');
+    let inOrderedList = false;
+    let orderedListHtml = '';
+    
+    orderedListLines.forEach(line => {
+      if (line.match(/^\d+\. (.*?)$/)) {
+        if (!inOrderedList) {
+          // Inizia una nuova lista ordinata
+          orderedListHtml += '<ol>';
+          inOrderedList = true;
+        }
+        const itemContent = line.replace(/^\d+\. (.*?)$/, '$1');
+        orderedListHtml += `<li>${itemContent}</li>`;
+      } else {
+        if (inOrderedList) {
+          // Chiudi la lista ordinata precedente
+          orderedListHtml += '</ol>';
+          inOrderedList = false;
+        }
+        orderedListHtml += line + '\n';
+      }
+    });
+    
+    // Chiudi l'ultima lista ordinata se necessario
+    if (inOrderedList) {
+      orderedListHtml += '</ol>';
+    }
+    
+    html = orderedListHtml;
     
     // Gestione dei link alle entità
     html = parseEntityLinks(html);
