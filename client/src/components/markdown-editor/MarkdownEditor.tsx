@@ -147,6 +147,13 @@ const MarkdownEditor: React.FC = () => {
       return;
     }
     
+    // Ctrl+S / Cmd+S per barrato
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      applyFormatting('strikethrough');
+      return;
+    }
+    
     // Ctrl+Z / Cmd+Z per annullare (undo)
     // Ctrl+Y / Cmd+Y per ripristinare (redo)
     // Non implementati qui perché gestiti nativamente dal browser
@@ -363,7 +370,7 @@ const MarkdownEditor: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => applyFormatting("strikethrough")}
-                  title="Barrato"
+                  title="Barrato (Ctrl+S)"
                 >
                   <Strikethrough className="h-4 w-4" />
                 </Button>
