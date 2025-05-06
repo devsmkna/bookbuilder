@@ -5,6 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Formatta una data nell'ISO format YYYY-MM-DD
+export function formatDate(date = new Date()): string {
+  return date.toISOString().split('T')[0];
+}
+
+// Verifica se una data è oggi
+export function isToday(dateStr: string): boolean {
+  return dateStr === formatDate();
+}
+
+// Verifica se una data è nell'ultima settimana
+export function isWithinLastWeek(dateStr: string): boolean {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const weekAgo = new Date();
+  weekAgo.setDate(today.getDate() - 7);
+  return date >= weekAgo && date <= today;
+}
+
 // Convert plain text to Markdown format
 export function applyMarkdownFormat(text: string, format: string): string {
   // Remove any existing Markdown formatting of the same type

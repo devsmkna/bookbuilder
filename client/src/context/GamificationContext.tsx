@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { useGamification } from '@/hooks/use-gamification';
+import { useApiGamification } from '@/hooks/use-api-gamification';
 import { LevelUpNotification } from '@/components/gamification/LevelUpNotification';
 import { UserStats, Achievement, WritingSession } from '@/lib/gamification/types';
 
@@ -38,7 +38,7 @@ const GamificationContext = createContext<GamificationContextType | undefined>(u
 // Provider del contesto
 export function GamificationProvider({ children }: { children: React.ReactNode }) {
   // Usa l'hook interno che gestisce tutta la logica
-  const gamification = useGamification();
+  const gamification = useApiGamification();
   
   // Funzione per incrementare personaggi
   const addCharacterCount = (count: number = 1) => {
