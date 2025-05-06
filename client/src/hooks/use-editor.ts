@@ -61,7 +61,15 @@ export function useEditor() {
     if (content) {
       localStorage.setItem('editor-content', content);
     }
-  }, [content]);
+    
+    // Process wiki links and render content
+    if (content) {
+      const processed = processWikiLinks(content, linkedEntities);
+      setRenderedContent(processed);
+    } else {
+      setRenderedContent("");
+    }
+  }, [content, linkedEntities]);
   
   // Load linked entities (characters and places)
   useEffect(() => {
@@ -188,14 +196,30 @@ export function useEditor() {
     setIsFormatMenuVisible(true);
   }, [editorRef]);
 
+  const processContent = useCallback(() => {
+    if (!content) {
+      setRenderedContent("");
+      return;
+    }
+    
+    // Process the content with markdown and wiki links
+    const processed = processWikiLinks(content, linkedEntities);
+    setRenderedContent(processed);
+  }, [content, linkedEntities]);
+
   const formatSelectedText = useCallback(
     (format: string) => {
-      if (!selection || !editorRef.current) return;
-
-      const range = selection.getRangeAt(0);
-      const selectedText = selection.toString();
+      if (!editorRef.current) return;
       
-      if (!selectedText.trim()) return;
+      // Get the current selection
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      
+      const range = sel.getRangeAt(0);
+      const selectedText = sel.toString();
+      
+      // Check we have text selected and that the selection is within our editor
+      if (!selectedText.trim() || !editorRef.current.contains(range.commonAncestorContainer)) return;
       
       // Apply formatting to the selected text
       const formattedText = applyMarkdownFormat(selectedText, format);
@@ -203,33 +227,29 @@ export function useEditor() {
       // Replace the selected text with the formatted text
       range.deleteContents();
       
-      // Insert the formatted text at the current selection
+      // Insert the formatted text
       const textNode = document.createTextNode(formattedText);
       range.insertNode(textNode);
       
-      // Create a new range after the inserted text to avoid immediate
-      // overwriting of formatting when continuing to type
+      // Create a new range after the inserted text
       const newRange = document.createRange();
       newRange.setStartAfter(textNode);
       newRange.collapse(true);
       
-      // Clear existing selections and set the new one
-      selection.removeAllRanges();
-      selection.addRange(newRange);
+      // Update selection
+      sel.removeAllRanges();
+      sel.addRange(newRange);
       
-      // Update the content state with the newly formatted text
+      // Update the content state
       if (editorRef.current) {
-        setContent(editorRef.current.innerText);
-        
-        // Force trigger an update event
-        const inputEvent = new Event('input', { bubbles: true });
-        editorRef.current.dispatchEvent(inputEvent);
+        const newContent = editorRef.current.innerText;
+        setContent(newContent);
       }
       
       // Hide the format menu
       setIsFormatMenuVisible(false);
     },
-    [selection, editorRef, setContent]
+    [editorRef, setContent]
   );
 
   const formatMenuProps: FormatMenuProps = {
@@ -253,18 +273,6 @@ export function useEditor() {
     }
   }, []);
   
-  // Process content with wiki links
-  const processContent = useCallback(() => {
-    if (!content) {
-      setRenderedContent("");
-      return;
-    }
-    
-    // Process the content with markdown and wiki links
-    const processed = processWikiLinks(content, linkedEntities);
-    setRenderedContent(processed);
-  }, [content, linkedEntities]);
-  
   // Toggle between raw markdown and WYSIWYG mode
   const toggleEditorMode = useCallback(() => {
     // Save current content before toggling mode to ensure it persists
@@ -274,10 +282,7 @@ export function useEditor() {
     
     // Toggle the mode
     setIsWysiwygMode(prev => !prev);
-    
-    // Force re-process content for wiki links
-    processContent();
-  }, [content, processContent]);
+  }, [content]);
   
   // Handle adding a wiki link by selecting text and converting to [[text]]
   const createWikiLink = useCallback(() => {
@@ -308,21 +313,9 @@ export function useEditor() {
     // Update the content state
     if (editorRef.current) {
       setContent(editorRef.current.innerText);
-      
-      // Trigger an input event to update the editor
-      const inputEvent = new Event('input', { bubbles: true });
-      editorRef.current.dispatchEvent(inputEvent);
     }
     
-    // Process the content to show the updated links
-    processContent();
-    
-  }, [selection, editorRef, processContent, setContent]);
-
-  // Process content when it changes or when linkedEntities change
-  useEffect(() => {
-    processContent();
-  }, [content, linkedEntities, processContent]);
+  }, [selection, editorRef, setContent]);
 
   return {
     editorRef,

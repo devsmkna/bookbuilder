@@ -12,20 +12,6 @@ interface EditorContentProps {
   onCreateWikiLink?: () => void;
 }
 
-// Regular expressions for inline markdown patterns
-const MARKDOWN_PATTERNS = [
-  { pattern: /\*\*(.*?)\*\*/g, tag: 'strong' },         // Bold: **text**
-  { pattern: /\*(.*?)\*/g, tag: 'em' },                 // Italic: *text*
-  { pattern: /`(.*?)`/g, tag: 'code' },                 // Inline code: `code`
-  { pattern: /~~(.*?)~~/g, tag: 'del' },                // Strikethrough: ~~text~~
-  { pattern: /<u>(.*?)<\/u>/g, tag: 'u' },              // Underline: <u>text</u>
-  { pattern: /^# (.*?)$/gm, tag: 'h1' },                // H1: # Heading
-  { pattern: /^## (.*?)$/gm, tag: 'h2' },               // H2: ## Heading
-  { pattern: /^### (.*?)$/gm, tag: 'h3' },              // H3: ### Heading
-  { pattern: /^> (.*?)$/gm, tag: 'blockquote' },        // Quote: > text
-  { pattern: /^- (.*?)$/gm, tag: 'li' }                 // List item: - item
-];
-
 const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
   ({ 
     content, 
@@ -37,8 +23,6 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
   }, ref) => {
     const editorRef = useRef<HTMLDivElement | null>(null);
     const placeholderShown = !content;
-    const [isComposing, setIsComposing] = useState(false);
-    const lastCaretPosition = useRef<number | null>(null);
     
     // Update the ref to the DOM node when it's available
     useEffect(() => {
@@ -49,121 +33,52 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
           ref.current = editorRef.current;
         }
       }
-    }, [ref, editorRef.current]);
+    }, [ref]);
 
     // Keep the editor content synchronized with the content prop
     useEffect(() => {
-      if (editorRef.current && !placeholderShown) {
-        const hasPlaceholder = editorRef.current.querySelector('.placeholder');
-        if (hasPlaceholder) {
-          editorRef.current.innerHTML = '';
-        }
-        if (editorRef.current.innerText !== content) {
+      if (editorRef.current && !isWysiwygMode) {
+        // Only update if the content has changed and doesn't match the editor
+        const currentText = editorRef.current.innerText;
+        if (currentText !== content) {
+          // Preserve selection
+          const selection = window.getSelection();
+          const hadSelection = selection && selection.rangeCount > 0;
+          let range = hadSelection ? selection.getRangeAt(0).cloneRange() : null;
+          let startContainer = range?.startContainer;
+          let startOffset = range?.startOffset || 0;
+          let isSelectionInEditor = false;
+          
+          if (hadSelection && startContainer && editorRef.current.contains(startContainer)) {
+            isSelectionInEditor = true;
+          }
+          
+          // Update content
           editorRef.current.innerText = content;
-        }
-      }
-    }, [content, placeholderShown]);
-
-    // Save caret position
-    const saveCaretPosition = () => {
-      if (!window.getSelection) return;
-      const selection = window.getSelection();
-      if (!selection || !selection.rangeCount) return;
-      
-      const range = selection.getRangeAt(0);
-      if (!editorRef.current || !editorRef.current.contains(range.commonAncestorContainer)) return;
-      
-      lastCaretPosition.current = range.startOffset;
-    };
-
-    // Restore caret position
-    const restoreCaretPosition = () => {
-      if (lastCaretPosition.current === null || !editorRef.current) return;
-      
-      try {
-        const selection = window.getSelection();
-        if (!selection) return;
-        
-        // Create a range and set it at the saved position
-        const range = document.createRange();
-        
-        // Find text node to place caret in
-        let textNode = editorRef.current;
-        if (editorRef.current.childNodes.length > 0) {
-          // Try to find the first text node
-          for (let i = 0; i < editorRef.current.childNodes.length; i++) {
-            if (editorRef.current.childNodes[i].nodeType === Node.TEXT_NODE) {
-              textNode = editorRef.current.childNodes[i] as any;
-              break;
+          
+          // Restore selection if it was within the editor
+          if (isSelectionInEditor && selection && range) {
+            try {
+              // Try to find a text node to place the cursor
+              const textNode = Array.from(editorRef.current.childNodes)
+                .find(node => node.nodeType === Node.TEXT_NODE) || editorRef.current;
+              
+              // Create a new range and try to position it
+              const newRange = document.createRange();
+              const offset = Math.min(startOffset, textNode.textContent?.length || 0);
+              
+              newRange.setStart(textNode, offset);
+              newRange.collapse(true);
+              
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            } catch (e) {
+              console.error("Error restoring selection:", e);
             }
           }
         }
-        
-        const offset = Math.min(lastCaretPosition.current, textNode.textContent?.length || 0);
-        range.setStart(textNode, offset);
-        range.collapse(true);
-        
-        // Apply the range
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        lastCaretPosition.current = null;
-      } catch (e) {
-        console.error('Failed to restore caret position:', e);
       }
-    };
-
-    // Apply Markdown formatting automatically
-    const applyMarkdownFormatting = () => {
-      if (!editorRef.current || isComposing) return;
-      
-      // Get current content and selection position
-      const currentContent = editorRef.current.innerText;
-      
-      // Save caret position before manipulating DOM
-      saveCaretPosition();
-      
-      // Track if formatting was applied
-      let wasFormatApplied = false;
-      
-      // Apply HTML for markdown patterns
-      for (const { pattern, tag } of MARKDOWN_PATTERNS) {
-        // Reset pattern's lastIndex (needed for regex with global flag)
-        pattern.lastIndex = 0;
-        
-        if (pattern.test(currentContent)) {
-          // Reset for iteration
-          pattern.lastIndex = 0;
-          
-          const elementContent = editorRef.current.innerHTML;
-          
-          // Create a temporary element to work with the HTML
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = elementContent;
-          
-          // Apply formatting
-          const updatedHTML = elementContent.replace(pattern, (match, content) => {
-            wasFormatApplied = true;
-            return `<${tag}>${content}</${tag}>`;
-          });
-          
-          if (wasFormatApplied) {
-            // Apply the formatted HTML
-            editorRef.current.innerHTML = updatedHTML;
-            
-            // Update content state
-            onChange(currentContent);
-            
-            // Restore caret position
-            setTimeout(() => {
-              restoreCaretPosition();
-            }, 0);
-            
-            return;
-          }
-        }
-      }
-    };
+    }, [content, isWysiwygMode]);
 
     const handlePaste = (e: React.ClipboardEvent) => {
       e.preventDefault();
@@ -174,9 +89,6 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
     const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
       const newContent = (e.target as HTMLDivElement).innerText || "";
       onChange(newContent);
-      
-      // Apply Markdown formatting
-      applyMarkdownFormatting();
     };
 
     // Prevent default behavior for certain keys to maintain control of the editor
@@ -202,48 +114,10 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
         }
       }
       
-      // Handle key combinations for formatting
+      // Handle key combinations for keyboard shortcuts
       if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-        let format = '';
-        switch (e.key.toLowerCase()) {
-          case 'b': format = 'bold'; break;
-          case 'i': format = 'italic'; break;
-          case 'u': format = 'underline'; break;
-        }
-        
-        // Apply formatting to the selected text
-        if (format && window.getSelection) {
-          const selection = window.getSelection();
-          if (selection && !selection.isCollapsed) {
-            // Let the parent component handle the formatting
-            // This will be handled via the selectionchange event
-          }
-        }
-      }
-      
-      // Detect when special markdown characters are typed and apply formatting
-      if (['*', '`', '#', '>', '-', '_', '~', '[', ']'].includes(e.key)) {
-        // We'll delay the formatting check slightly to get the updated content
-        setTimeout(applyMarkdownFormatting, 10);
-      }
-    };
-
-    // IME Composition handling for languages like Chinese, Japanese, etc.
-    const handleCompositionStart = () => {
-      setIsComposing(true);
-    };
-
-    const handleCompositionEnd = () => {
-      setIsComposing(false);
-      // Apply formatting after IME composition ends
-      setTimeout(applyMarkdownFormatting, 10);
-    };
-
-    // Auto-update formatting when a space is typed
-    const handleKeyUp = (e: React.KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') {
-        applyMarkdownFormatting();
+        e.preventDefault(); 
+        // These will be handled by the Editor component through event listeners
       }
     };
 
@@ -263,11 +137,11 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
       }
     };
     
-    // When in WYSIWYG mode and we have rendered content, show the preview
-    if (isWysiwygMode && renderedContent) {
+    // When in WYSIWYG mode, show the rendered preview
+    if (isWysiwygMode) {
       // Create a class name that includes common styles plus mode-specific ones
       const wysiwygClassName = cn(
-        "editor-wysiwyg p-6 whitespace-pre-wrap",
+        "editor-wysiwyg p-6 whitespace-pre-wrap", 
         "min-h-[70vh] outline-none"
       );
       
@@ -285,23 +159,18 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(
       <div
         ref={editorRef}
         className={cn(
-          "editor-content p-6 whitespace-pre-wrap",
-          "min-h-[70vh] outline-none",
-          isWysiwygMode ? "hidden" : "block"
+          "editor-content p-6 whitespace-pre-wrap font-mono text-sm",
+          "min-h-[70vh] outline-none"
         )}
         contentEditable={true}
         suppressContentEditableWarning={true}
         onPaste={handlePaste}
         onInput={handleInput}
         onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
         data-placeholder="Start typing, or paste Markdown content..."
       >
-        {!isWysiwygMode && content ? content : null}
-        {placeholderShown && content === "" && (
-          <div className="placeholder">Start typing, or paste Markdown content...</div>
+        {content || (
+          <div className="placeholder text-muted-foreground">Start typing, or paste Markdown content...</div>
         )}
       </div>
     );
