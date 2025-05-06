@@ -365,6 +365,7 @@ const MarkdownEditor: React.FC = () => {
         isDarkTheme={isDarkTheme}
         toggleTheme={toggleTheme}
         onOpenSidebar={() => setIsSidebarOpen(true)}
+        onOpenExportImport={() => window.dispatchEvent(new Event('open-export-import'))}
       />
       
       <main className="flex-1 overflow-auto" ref={editorRef}>

@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -36,6 +37,19 @@ function AppContent() {
   
   // Utilizziamo il hook per l'esportazione/importazione del progetto
   const { isExportImportOpen, openExportImport, closeExportImport } = useProjectExport();
+  
+  // Registra un event listener per aprire la finestra di esportazione/importazione
+  React.useEffect(() => {
+    const handleOpenExportImport = () => {
+      openExportImport();
+    };
+    
+    window.addEventListener('open-export-import', handleOpenExportImport);
+    
+    return () => {
+      window.removeEventListener('open-export-import', handleOpenExportImport);
+    };
+  }, [openExportImport]);
   
   return (
     <>
