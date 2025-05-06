@@ -39,7 +39,7 @@ function AppContent() {
   const { isExportImportOpen, openExportImport, closeExportImport } = useProjectExport();
   
   // Registra un event listener per aprire la finestra di esportazione/importazione
-  React.useEffect(() => {
+  useEffect(() => {
     const handleOpenExportImport = () => {
       openExportImport();
     };
