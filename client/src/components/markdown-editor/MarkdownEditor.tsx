@@ -81,11 +81,8 @@ const MarkdownEditor: React.FC = () => {
     const newValue = e.target.value;
     setContent(newValue);
     
-    // Aggiorna il conteggio delle parole e dei caratteri
-    const text = newValue || '';
-    const wordMatches = text.match(/\S+/g);
-    setWordCount(wordMatches ? wordMatches.length : 0);
-    setCharCount(text.length);
+    // Nota: il conteggio di parole e caratteri è già gestito 
+    // internamente nell'hook useMarkdownEditor quando setContent viene chiamato
   };
   
   // Gestisce i tasti speciali nella textarea
