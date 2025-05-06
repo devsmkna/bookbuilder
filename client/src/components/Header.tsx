@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, BookOpen, Maximize, Minimize, Sun, Moon, Eye, EyeOff } from "lucide-react";
+import { Menu, BookOpen, Maximize, Minimize, Sun, Moon, Eye, EyeOff, FileUp } from "lucide-react";
 
 interface HeaderProps {
   onOpenSidebar: () => void;
@@ -10,6 +10,7 @@ interface HeaderProps {
   toggleTheme?: () => void;
   isWysiwygMode?: boolean;
   toggleEditorMode?: () => void;
+  onOpenExportImport?: () => void;
 }
 
 export default function Header({ 
@@ -19,7 +20,8 @@ export default function Header({
   isDarkTheme = false,
   toggleTheme = () => {},
   isWysiwygMode = true,
-  toggleEditorMode = () => {}
+  toggleEditorMode = () => {},
+  onOpenExportImport = () => {}
 }: HeaderProps) {
   return (
     <header className="border-b border-border py-3">
