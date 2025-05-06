@@ -108,6 +108,34 @@
   color: rgb(109, 40, 217);
 }
 
+/* Stilizzazione delle menzioni nell'editor */
+.markdown-textarea-container textarea {
+  color-scheme: light dark;
+}
+
+/* Evidenziazione con highlighting personalizzato tramite REGEX per le menzioni */
+@keyframes mention-highlight {
+  0% { background-color: rgba(59, 130, 246, 0.2); }
+  50% { background-color: rgba(59, 130, 246, 0.3); }
+  100% { background-color: rgba(59, 130, 246, 0.2); }
+}
+
+/* Applicato ai contenitori che includono le menzioni */
+.entity-mention {
+  display: inline-block;
+  background-color: rgba(59, 130, 246, 0.2);
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  margin: 0 0.1rem;
+  transition: background-color 0.3s ease;
+}
+
+.entity-mention:hover {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
 /* Tooltips */
 .entity-tooltip {
   max-width: 320px;

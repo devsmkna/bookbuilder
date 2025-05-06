@@ -78,7 +78,14 @@ const MarkdownEditor: React.FC = () => {
   
   // Gestisce i cambiamenti della textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+    const newValue = e.target.value;
+    setContent(newValue);
+    
+    // Aggiorna il conteggio delle parole e dei caratteri
+    const text = newValue || '';
+    const wordMatches = text.match(/\S+/g);
+    setWordCount(wordMatches ? wordMatches.length : 0);
+    setCharCount(text.length);
   };
   
   // Gestisce i tasti speciali nella textarea
