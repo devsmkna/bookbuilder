@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, BookOpen, Maximize, Minimize, Sun, Moon, Eye, EyeOff, FileUp } from "lucide-react";
+import { Menu, BookOpen, FileUp } from "lucide-react";
 
 interface HeaderProps {
   onOpenSidebar: () => void;
@@ -40,46 +40,27 @@ export default function Header({
             <BookOpen className="h-5 w-5 mr-2 text-primary" />
             <h1 className="font-medium text-primary text-xl">BookBuilder</h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (confirm("Do you want to export the current project before creating a new one?")) {
+                // Prima esporta il progetto attuale
+                onOpenExportImport();
+              }
+              // Poi resetta tutto (localStorage)
+              if (confirm("Create a new project? This will clear all current data.")) {
+                localStorage.clear();
+                window.location.reload();
+              }
+            }}
+            className="ml-4"
+          >
+            Create New Project
+          </Button>
         </div>
         
         <div className="flex items-center space-x-2">
-          <div className="text-sm text-muted-foreground mr-4">
-            Your creative writing companion
-          </div>
-          
-          {/* Editor mode toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleEditorMode}
-            aria-label={isWysiwygMode ? "Switch to raw markdown mode" : "Switch to preview mode"}
-            title={isWysiwygMode ? "Switch to raw markdown mode" : "Switch to preview mode"}
-          >
-            {isWysiwygMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-          </Button>
-          
-          {/* Theme toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            aria-label={isDarkTheme ? "Switch to light theme" : "Switch to dark theme"}
-            title={isDarkTheme ? "Switch to light theme" : "Switch to dark theme"}
-          >
-            {isDarkTheme ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
-          
-          {/* Fullscreen toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-          </Button>
-          
           {/* Export/Import toggle */}
           <Button
             variant="ghost"
