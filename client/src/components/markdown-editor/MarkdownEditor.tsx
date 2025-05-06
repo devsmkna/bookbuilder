@@ -117,6 +117,45 @@ const MarkdownEditor: React.FC = () => {
       return;
     }
     
+    // Implementazione di shortcut comuni
+    
+    // Ctrl+B / Cmd+B per grassetto
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      applyFormatting('bold');
+      return;
+    }
+    
+    // Ctrl+I / Cmd+I per corsivo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      applyFormatting('italic');
+      return;
+    }
+    
+    // Ctrl+U / Cmd+U per sottolineato
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+      e.preventDefault();
+      applyFormatting('underline');
+      return;
+    }
+    
+    // Ctrl+K / Cmd+K per codice
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      applyFormatting('code');
+      return;
+    }
+    
+    // Ctrl+Z / Cmd+Z per annullare (undo)
+    // Ctrl+Y / Cmd+Y per ripristinare (redo)
+    // Non implementati qui perché gestiti nativamente dal browser
+    
+    // Ctrl+X / Cmd+X per tagliare (cut)
+    // Ctrl+C / Cmd+C per copiare (copy)
+    // Ctrl+V / Cmd+V per incollare (paste)
+    // Non implementati qui perché gestiti nativamente dal browser
+    
     // Quando si digita [[, mostra il menu delle entità
     if (e.key === "[") {
       // Controlliamo se c'è già un [ precedente
@@ -316,7 +355,7 @@ const MarkdownEditor: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => applyFormatting("underline")}
-                  title="Sottolineato"
+                  title="Sottolineato (Ctrl+U)"
                 >
                   <Underline className="h-4 w-4" />
                 </Button>
