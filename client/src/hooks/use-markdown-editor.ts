@@ -330,7 +330,12 @@ export function useMarkdownEditor() {
   
   // Cerca entità in base alla query
   const searchEntities = (query: string) => {
+    console.log("Ricerca entità con query:", query);
+    console.log("Entità disponibili per la ricerca:", linkedEntities);
+    
     if (!query) {
+      // Se non c'è query, mostra tutte le entità disponibili
+      console.log("Mostro tutte le entità:", linkedEntities);
       setEntitySearchResults({ entities: linkedEntities, query: "" });
       return;
     }
@@ -339,6 +344,8 @@ export function useMarkdownEditor() {
     const filteredEntities = linkedEntities.filter(
       entity => entity.name.toLowerCase().includes(lowerCaseQuery)
     );
+    
+    console.log("Entità filtrate:", filteredEntities);
     
     setEntitySearchResults({
       entities: filteredEntities,
