@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import { useGamificationContext } from "@/context/GamificationContext";
 import { 
   Bold, 
   Italic, 
@@ -29,6 +30,9 @@ import { cn } from "@/lib/utils";
 import "./editor-styles.css";
 
 const MarkdownEditor: React.FC = () => {
+  // Ottieni le funzioni dal contesto di gamification
+  const { addWordCount, addCharacterCount } = useGamificationContext();
+  
   const {
     // State
     content,
@@ -79,10 +83,38 @@ const MarkdownEditor: React.FC = () => {
   // Gestisce i cambiamenti della textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
+    const oldValue = content;
+    
+    // Calcola il numero di parole e caratteri prima dell'aggiornamento
+    const oldWordCount = wordCount || 0;
+    const oldCharCount = charCount || 0;
+    
+    // Aggiorna il contenuto
     setContent(newValue);
     
-    // Nota: il conteggio di parole e caratteri è già gestito 
-    // internamente nell'hook useMarkdownEditor quando setContent viene chiamato
+    // Il conteggio di parole e caratteri viene aggiornato nell'hook useMarkdownEditor
+    // Aspettiamo che il conteggio sia aggiornato nel prossimo ciclo di rendering
+    setTimeout(() => {
+      // Verifichiamo se sono state aggiunte parole
+      if (wordCount > oldWordCount) {
+        const wordsAdded = wordCount - oldWordCount;
+        
+        // Aggiorna il sistema di gamification con il numero di parole aggiunte
+        addWordCount(wordsAdded);
+        
+        console.log(`Aggiunte ${wordsAdded} parole al sistema di gamification`);
+      }
+      
+      // Verifichiamo se sono stati aggiunti caratteri
+      if (charCount > oldCharCount) {
+        const charsAdded = charCount - oldCharCount;
+        
+        // Aggiorna il sistema di gamification con il numero di caratteri aggiunti
+        addCharacterCount(charsAdded);
+        
+        console.log(`Aggiunti ${charsAdded} caratteri al sistema di gamification`);
+      }
+    }, 0);
   };
   
   // Gestisce i tasti speciali nella textarea
@@ -320,6 +352,26 @@ const MarkdownEditor: React.FC = () => {
   useEffect(() => {
     restoreTemporaryContent();
   }, [restoreTemporaryContent]);
+  
+  // Traccia la sessione di scrittura per la gamification
+  useEffect(() => {
+    // Controlla se c'è una sessione di scrittura precedente
+    const lastSessionDate = localStorage.getItem('last-writing-session');
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Se è il primo accesso di oggi, incrementa sessionsCompleted
+    if (lastSessionDate !== today) {
+      // Aggiorna la data dell'ultima sessione
+      localStorage.setItem('last-writing-session', today);
+      
+      // Aggiorna il conteggio delle sessioni di scrittura
+      // Ma solo se abbiamo scritto effettivamente qualcosa
+      if (wordCount > 0) {
+        // Il sistema di gamification si occuperà di verificare gli achievement
+        // Questo sarà fatto automaticamente grazie ai dati aggiornati in localStorage
+      }
+    }
+  }, [wordCount]);
   
   // Gestisce lo scorrimento ai risultati di ricerca
   useEffect(() => {
