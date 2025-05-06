@@ -272,9 +272,10 @@ export function useMarkdownEditor() {
     } else {
       setShowFormatMenu(false);
       
-      // Controlla se è stato digitato @ per mostrare il menu delle entità
+      // Controlla se è stato digitato [[ per mostrare il menu delle entità
       const currentLine = getCurrentLineContent(textarea);
-      const match = /@(\w*)$/.exec(currentLine);
+      // Cerchiamo il pattern [[query o [[ da solo alla fine della linea
+      const match = /\[\[([\w\s]*)$/.exec(currentLine);
       
       if (match) {
         const query = match[1];
@@ -464,20 +465,20 @@ export function useMarkdownEditor() {
     const text = textarea.value;
     const cursorPos = textarea.selectionStart;
     
-    // Troviamo l'inizio del tag @
+    // Troviamo l'inizio del tag [[
     let tagStart = cursorPos;
-    while (tagStart > 0 && text[tagStart - 1] !== '@') {
+    while (tagStart > 1 && !(text[tagStart - 1] === '[' && text[tagStart - 2] === '[')) {
       tagStart--;
       if (tagStart > 0 && text[tagStart - 1] === '\n') break;
     }
     
-    if (tagStart > 0) tagStart--; // Include il carattere @
+    if (tagStart > 1) tagStart -= 2; // Include i caratteri [[
     
     // Creiamo una sintassi wiki-style come Obsidian
     // Format: [[entity.name|type:id]]
     const mention = `[[${entity.name}|${entity.type}:${entity.id}]]`;
     
-    // Sostituisci @query con la menzione
+    // Sostituisci [[query con la menzione completa
     const newContent = 
       text.substring(0, tagStart) + 
       mention + 
