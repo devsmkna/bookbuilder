@@ -117,9 +117,13 @@ const MarkdownEditor: React.FC = () => {
       return;
     }
     
-    // Quando @ è premuto, mostra il menu delle entità
-    if (e.key === "@") {
-      // Il menu verrà mostrato tramite handleSelectionChange
+    // Quando si digita [[, mostra il menu delle entità
+    if (e.key === "[") {
+      // Controlliamo se c'è già un [ precedente
+      const selStart = e.currentTarget.selectionStart;
+      if (selStart > 0 && e.currentTarget.value.charAt(selStart - 1) === '[') {
+        // Il menu verrà mostrato tramite handleSelectionChange
+      }
     }
   };
   
@@ -186,9 +190,9 @@ const MarkdownEditor: React.FC = () => {
       }
     } 
     
-    // Per le nuove menzioni @name{type:id}
+    // Per le nuove menzioni [[name|type:id]]
     const text = target.textContent || '';
-    const mentionRegex = /@([^{]+){(character|place|race|event):([^}]+)}/;
+    const mentionRegex = /\[\[([^\|]+)\|(character|place|race|event):([^\]]+)\]\]/;
     const match = text.match(mentionRegex);
     
     if (match) {
@@ -378,10 +382,10 @@ const MarkdownEditor: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  title="Inserisci @menzione per linkare personaggi, luoghi o razze"
+                  title="Inserisci [[menzione]] per linkare personaggi, luoghi o razze"
                 >
                   <Link2 className="h-4 w-4" />
-                  <span className="ml-1 text-xs">@menzione</span>
+                  <span className="ml-1 text-xs">[[menzione]]</span>
                 </Button>
               </div>
               
@@ -425,7 +429,7 @@ const MarkdownEditor: React.FC = () => {
                   onChange={handleTextareaChange}
                   onKeyDown={handleKeyDown}
                   onSelect={handleSelectionChange}
-                  placeholder="Inizia a scrivere qui... Usa Markdown per la formattazione e @ per menzionare entità"
+                  placeholder="Inizia a scrivere qui... Usa Markdown per la formattazione e [[nome|tipo:id]] per menzionare entità"
                   spellCheck="false"
                 ></textarea>
               </div>

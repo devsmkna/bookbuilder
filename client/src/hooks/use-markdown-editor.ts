@@ -473,9 +473,9 @@ export function useMarkdownEditor() {
     
     if (tagStart > 0) tagStart--; // Include il carattere @
     
-    // Creiamo una sintassi più semplice ma conserviamo i dati necessari in attributi nascosti
-    // Format: @entity.name{type:id}
-    const mention = `@${entity.name}{${entity.type}:${entity.id}}`;
+    // Creiamo una sintassi wiki-style come Obsidian
+    // Format: [[entity.name|type:id]]
+    const mention = `[[${entity.name}|${entity.type}:${entity.id}]]`;
     
     // Sostituisci @query con la menzione
     const newContent = 
@@ -513,8 +513,8 @@ export function useMarkdownEditor() {
       return label;
     });
     
-    // Supporta il nuovo formato @name{type:id}
-    const newEntityMentionRegex = /@([^{]+){(character|place|race|event):([^}]+)}/g;
+    // Supporta il nuovo formato wiki-style [[name|type:id]]
+    const newEntityMentionRegex = /\[\[([^\|]+)\|(character|place|race|event):([^\]]+)\]\]/g;
     
     return text.replace(newEntityMentionRegex, (match, name, type, id) => {
       // Trova l'entità corrispondente
