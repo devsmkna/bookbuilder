@@ -31,7 +31,7 @@ import "./editor-styles.css";
 
 const MarkdownEditor: React.FC = () => {
   // Ottieni le funzioni dal contesto di gamification
-  const { addWordCount, addCharacterCount } = useGamificationContext();
+  const { addWordCount, startWritingSession } = useGamificationContext();
   
   const {
     // State
@@ -85,14 +85,16 @@ const MarkdownEditor: React.FC = () => {
     const newValue = e.target.value;
     const oldValue = content;
     
-    // Calcola il numero di parole e caratteri prima dell'aggiornamento
+    // Inizializziamo la sessione di scrittura se necessario
+    startWritingSession();
+    
+    // Calcola il numero di parole prima dell'aggiornamento
     const oldWordCount = wordCount || 0;
-    const oldCharCount = charCount || 0;
     
     // Aggiorna il contenuto
     setContent(newValue);
     
-    // Il conteggio di parole e caratteri viene aggiornato nell'hook useMarkdownEditor
+    // Il conteggio di parole viene aggiornato nell'hook useMarkdownEditor
     // Aspettiamo che il conteggio sia aggiornato nel prossimo ciclo di rendering
     setTimeout(() => {
       // Verifichiamo se sono state aggiunte parole
@@ -101,18 +103,6 @@ const MarkdownEditor: React.FC = () => {
         
         // Aggiorna il sistema di gamification con il numero di parole aggiunte
         addWordCount(wordsAdded);
-        
-        console.log(`Aggiunte ${wordsAdded} parole al sistema di gamification`);
-      }
-      
-      // Verifichiamo se sono stati aggiunti caratteri
-      if (charCount > oldCharCount) {
-        const charsAdded = charCount - oldCharCount;
-        
-        // Aggiorna il sistema di gamification con il numero di caratteri aggiunti
-        addCharacterCount(charsAdded);
-        
-        console.log(`Aggiunti ${charsAdded} caratteri al sistema di gamification`);
       }
     }, 0);
   };
