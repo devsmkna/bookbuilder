@@ -37,7 +37,7 @@ const GamificationContext = createContext<GamificationContextType | undefined>(u
 
 // Provider del contesto
 export function GamificationProvider({ children }: { children: React.ReactNode }) {
-  // Usa l'hook interno che gestisce tutta la logica
+  // Usa l'hook interno che gestisce tutta la logica - ora utilizza l'API
   const gamification = useApiGamification();
   
   // Funzione per incrementare personaggi
@@ -45,9 +45,9 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     // Valida conteggio positivo
     if (count <= 0) return;
     
-    // Aggiorna conteggio personaggi
+    // Aggiorna conteggio personaggi tramite API
     gamification.updateStats({
-      characterCount: gamification.stats.characterCount + count
+      characterCount: (gamification.stats?.characterCount || 0) + count
     });
   };
   
@@ -56,9 +56,9 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     // Valida conteggio positivo
     if (count <= 0) return;
     
-    // Aggiorna conteggio luoghi
+    // Aggiorna conteggio luoghi tramite API
     gamification.updateStats({
-      placeCount: gamification.stats.placeCount + count
+      placeCount: (gamification.stats?.placeCount || 0) + count
     });
   };
   
@@ -67,9 +67,9 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     // Valida conteggio positivo
     if (count <= 0) return;
     
-    // Aggiorna conteggio razze
+    // Aggiorna conteggio razze tramite API
     gamification.updateStats({
-      raceCount: gamification.stats.raceCount + count
+      raceCount: (gamification.stats?.raceCount || 0) + count
     });
   };
   
@@ -78,9 +78,9 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     // Valida conteggio positivo
     if (count <= 0) return;
     
-    // Aggiorna conteggio eventi
+    // Aggiorna conteggio eventi tramite API
     gamification.updateStats({
-      eventCount: gamification.stats.eventCount + count
+      eventCount: (gamification.stats?.eventCount || 0) + count
     });
   };
   

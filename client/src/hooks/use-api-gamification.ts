@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Achievement, UserStats, WritingSession } from '@/lib/gamification/types';
-import { formatDate, isToday } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
   DAILY_GOALS,
