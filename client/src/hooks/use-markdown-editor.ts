@@ -504,16 +504,9 @@ export function useMarkdownEditor() {
       const entity = linkedEntities.find(e => e.id === id && e.type === type);
       
       if (entity) {
-        // Crea un elemento HTML per il link con attributi data per le informazioni sull'entità
-        return `<a 
-          href="#" 
-          class="entity-link entity-${type}" 
-          data-entity-id="${id}" 
-          data-entity-type="${type}" 
-          data-entity-name="${entity.name}"
-          data-entity-desc="${entity.description || ''}"
-          data-entity-img="${entity.imageUrl || ''}"
-        >${label}</a>`;
+        // Nell'anteprima, mostra solo il nome dell'entità come testo normale
+        // senza alcun link o formattazione speciale
+        return label;
       }
       
       // Se l'entità non viene trovata, mantieni il testo originale
