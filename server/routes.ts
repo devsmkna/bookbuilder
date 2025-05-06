@@ -545,20 +545,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parametri di filtro per data
       const { startDate, endDate } = req.query;
       
-      let query = db.select().from(writingSessions)
+      let sessionsQuery = db.select().from(writingSessions)
         .where(eq(writingSessions.userId, (req as any).userId))
         .orderBy(desc(writingSessions.date));
       
       // Applica filtri opzionali
       if (startDate) {
-        query = query.where(gte(writingSessions.date, new Date(startDate as string)));
+        sessionsQuery = sessionsQuery.where(gte(writingSessions.date, new Date(startDate as string)));
       }
       
       if (endDate) {
-        query = query.where(lte(writingSessions.date, new Date(endDate as string)));
+        sessionsQuery = sessionsQuery.where(lte(writingSessions.date, new Date(endDate as string)));
       }
       
-      const sessions = await query;
+      const sessions = await sessionsQuery;
       
       return res.status(200).json(sessions);
     } catch (error) {
@@ -567,6 +567,914 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // CHARACTERS API
+  // API per ottenere tutti i personaggi dell'utente
+  app.get("/api/characters", async (req, res) => {
+    try {
+      const userCharacters = await db.select().from(characters)
+        .where(eq(characters.userId, (req as any).userId))
+        .orderBy(asc(characters.name));
+      
+      return res.status(200).json(userCharacters);
+    } catch (error) {
+      console.error("Errore nel recuperare i personaggi:", error);
+      return res.status(500).json({ message: "Errore nel recuperare i personaggi" });
+    }
+  });
+  
+  // API per ottenere un personaggio specifico
+  app.get("/api/characters/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const character = await db.select().from(characters)
+        .where(and(
+          eq(characters.id, id),
+          eq(characters.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!character.length) {
+        return res.status(404).json({ message: "Personaggio non trovato" });
+      }
+      
+      return res.status(200).json(character[0]);
+    } catch (error) {
+      console.error("Errore nel recuperare il personaggio:", error);
+      return res.status(500).json({ message: "Errore nel recuperare il personaggio" });
+    }
+  });
+  
+  // API per creare un nuovo personaggio
+  app.post("/api/characters", async (req, res) => {
+    try {
+      const characterSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        pronunciation: z.string().optional(),
+        aliases: z.string().optional(),
+        age: z.string().optional(),
+        race: z.string().optional(),
+        imageData: z.string().optional(),
+        
+        // Tratti fisici
+        eyeColor: z.string().optional(),
+        secondEyeColor: z.string().optional(),
+        hasHeterochromia: z.boolean().optional(),
+        hairColor: z.string().optional(),
+        skinColor: z.string().optional(),
+        height: z.string().optional(),
+        bodyType: z.string().optional(),
+        
+        // Comportamento
+        attitude: z.string().optional(),
+        bodyLanguage: z.string().optional(), 
+        bodySigns: z.string().optional(),
+        
+        // Personale
+        parentalRelationship: z.string().optional(),
+        parentalTeachings: z.string().optional(),
+        respect: z.string().optional(),
+        hates: z.string().optional(),
+        fears: z.string().optional(),
+        contradictions: z.string().optional(),
+        dreams: z.string().optional(),
+        sacrificeForDreams: z.string().optional(),
+        values: z.string().optional(),
+        antiValues: z.string().optional(),
+        
+        // Evoluzione
+        motivationEvolution: z.string().optional(),
+        emotionalEvolution: z.string().optional(),
+        relationshipEvolution: z.string().optional(),
+        dreamEvolution: z.string().optional()
+      });
+      
+      // Valida i dati
+      const validatedData = characterSchema.parse(req.body);
+      
+      // Calcola la percentuale di completamento
+      const totalFields = 30; // Numero di campi che contribuiscono al completamento
+      const filledFields = Object.entries(validatedData).filter(([_, value]) => 
+        value !== undefined && value !== "" && value !== null
+      ).length;
+      const completionPercentage = Math.round((filledFields / totalFields) * 100);
+      
+      // Crea un nuovo personaggio
+      const [character] = await db.insert(characters)
+        .values({
+          id: generateId('char'),
+          userId: (req as any).userId,
+          ...validatedData,
+          completionPercentage
+        })
+        .returning();
+      
+      // Incrementa il contatore dei personaggi nelle statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0) {
+            await db.update(userStats)
+              .set({
+                characterCount: stats[0].characterCount + 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+            
+            // Verifica e aggiorna gli achievement
+            await checkAndUpdateAchievements({
+              ...stats[0],
+              characterCount: stats[0].characterCount + 1
+            });
+          }
+        });
+      
+      return res.status(201).json({
+        message: "Personaggio creato con successo",
+        character
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati del personaggio non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nella creazione del personaggio:", error);
+      return res.status(500).json({ message: "Errore nella creazione del personaggio" });
+    }
+  });
+  
+  // API per aggiornare un personaggio esistente
+  app.put("/api/characters/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che il personaggio esista e appartenga all'utente
+      const character = await db.select().from(characters)
+        .where(and(
+          eq(characters.id, id),
+          eq(characters.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!character.length) {
+        return res.status(404).json({ message: "Personaggio non trovato" });
+      }
+      
+      const characterSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        pronunciation: z.string().optional().nullable(),
+        aliases: z.string().optional().nullable(),
+        age: z.string().optional().nullable(),
+        race: z.string().optional().nullable(),
+        imageData: z.string().optional().nullable(),
+        
+        // Tratti fisici
+        eyeColor: z.string().optional().nullable(),
+        secondEyeColor: z.string().optional().nullable(),
+        hasHeterochromia: z.boolean().optional(),
+        hairColor: z.string().optional().nullable(),
+        skinColor: z.string().optional().nullable(),
+        height: z.string().optional().nullable(),
+        bodyType: z.string().optional().nullable(),
+        
+        // Comportamento
+        attitude: z.string().optional().nullable(),
+        bodyLanguage: z.string().optional().nullable(),
+        bodySigns: z.string().optional().nullable(),
+        
+        // Personale
+        parentalRelationship: z.string().optional().nullable(),
+        parentalTeachings: z.string().optional().nullable(),
+        respect: z.string().optional().nullable(),
+        hates: z.string().optional().nullable(),
+        fears: z.string().optional().nullable(),
+        contradictions: z.string().optional().nullable(),
+        dreams: z.string().optional().nullable(),
+        sacrificeForDreams: z.string().optional().nullable(),
+        values: z.string().optional().nullable(),
+        antiValues: z.string().optional().nullable(),
+        
+        // Evoluzione
+        motivationEvolution: z.string().optional().nullable(),
+        emotionalEvolution: z.string().optional().nullable(),
+        relationshipEvolution: z.string().optional().nullable(),
+        dreamEvolution: z.string().optional().nullable()
+      });
+      
+      // Valida i dati
+      const validatedData = characterSchema.parse(req.body);
+      
+      // Calcola la percentuale di completamento
+      const totalFields = 30; // Numero di campi che contribuiscono al completamento
+      const filledFields = Object.entries(validatedData).filter(([_, value]) => 
+        value !== undefined && value !== "" && value !== null
+      ).length;
+      const completionPercentage = Math.round((filledFields / totalFields) * 100);
+      
+      // Aggiorna il personaggio
+      const [updatedCharacter] = await db.update(characters)
+        .set({
+          ...validatedData,
+          completionPercentage,
+          updatedAt: new Date()
+        })
+        .where(eq(characters.id, id))
+        .returning();
+      
+      return res.status(200).json({
+        message: "Personaggio aggiornato con successo",
+        character: updatedCharacter
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati del personaggio non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nell'aggiornamento del personaggio:", error);
+      return res.status(500).json({ message: "Errore nell'aggiornamento del personaggio" });
+    }
+  });
+  
+  // API per eliminare un personaggio
+  app.delete("/api/characters/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che il personaggio esista e appartenga all'utente
+      const character = await db.select().from(characters)
+        .where(and(
+          eq(characters.id, id),
+          eq(characters.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!character.length) {
+        return res.status(404).json({ message: "Personaggio non trovato" });
+      }
+      
+      // Elimina il personaggio
+      await db.delete(characters)
+        .where(eq(characters.id, id));
+      
+      // Aggiorna le statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0 && stats[0].characterCount > 0) {
+            await db.update(userStats)
+              .set({
+                characterCount: stats[0].characterCount - 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+          }
+        });
+      
+      return res.status(200).json({
+        message: "Personaggio eliminato con successo"
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione del personaggio:", error);
+      return res.status(500).json({ message: "Errore nell'eliminazione del personaggio" });
+    }
+  });
+
+  // API RACES
+  // API per ottenere tutte le razze dell'utente
+  app.get("/api/races", async (req, res) => {
+    try {
+      const userRaces = await db.select().from(races)
+        .where(eq(races.userId, (req as any).userId))
+        .orderBy(asc(races.name));
+      
+      return res.status(200).json(userRaces);
+    } catch (error) {
+      console.error("Errore nel recuperare le razze:", error);
+      return res.status(500).json({ message: "Errore nel recuperare le razze" });
+    }
+  });
+  
+  // API per ottenere una razza specifica
+  app.get("/api/races/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const race = await db.select().from(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!race.length) {
+        return res.status(404).json({ message: "Razza non trovata" });
+      }
+      
+      return res.status(200).json(race[0]);
+    } catch (error) {
+      console.error("Errore nel recuperare la razza:", error);
+      return res.status(500).json({ message: "Errore nel recuperare la razza" });
+    }
+  });
+  
+  // API per creare una nuova razza
+  app.post("/api/races", async (req, res) => {
+    try {
+      const raceSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        lore: z.string().optional(),
+        traits: z.string().optional(),
+        society: z.string().optional(),
+        habitat: z.string().optional(),
+        imageData: z.string().optional()
+      });
+      
+      // Valida i dati
+      const validatedData = raceSchema.parse(req.body);
+      
+      // Crea una nuova razza
+      const [race] = await db.insert(races)
+        .values({
+          id: generateId('race'),
+          userId: (req as any).userId,
+          ...validatedData
+        })
+        .returning();
+      
+      // Incrementa il contatore delle razze nelle statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0) {
+            await db.update(userStats)
+              .set({
+                raceCount: stats[0].raceCount + 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+            
+            // Verifica e aggiorna gli achievement
+            await checkAndUpdateAchievements({
+              ...stats[0],
+              raceCount: stats[0].raceCount + 1
+            });
+          }
+        });
+      
+      return res.status(201).json({
+        message: "Razza creata con successo",
+        race
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della razza non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nella creazione della razza:", error);
+      return res.status(500).json({ message: "Errore nella creazione della razza" });
+    }
+  });
+  
+  // API per aggiornare una razza esistente
+  app.put("/api/races/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la razza esista e appartenga all'utente
+      const race = await db.select().from(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!race.length) {
+        return res.status(404).json({ message: "Razza non trovata" });
+      }
+      
+      const raceSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        lore: z.string().optional().nullable(),
+        traits: z.string().optional().nullable(),
+        society: z.string().optional().nullable(),
+        habitat: z.string().optional().nullable(),
+        imageData: z.string().optional().nullable()
+      });
+      
+      // Valida i dati
+      const validatedData = raceSchema.parse(req.body);
+      
+      // Aggiorna la razza
+      const [updatedRace] = await db.update(races)
+        .set({
+          ...validatedData,
+          updatedAt: new Date()
+        })
+        .where(eq(races.id, id))
+        .returning();
+      
+      return res.status(200).json({
+        message: "Razza aggiornata con successo",
+        race: updatedRace
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della razza non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nell'aggiornamento della razza:", error);
+      return res.status(500).json({ message: "Errore nell'aggiornamento della razza" });
+    }
+  });
+  
+  // API per eliminare una razza
+  app.delete("/api/races/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la razza esista e appartenga all'utente
+      const race = await db.select().from(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!race.length) {
+        return res.status(404).json({ message: "Razza non trovata" });
+      }
+      
+      // Elimina la razza
+      await db.delete(races)
+        .where(eq(races.id, id));
+      
+      // Aggiorna le statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0 && stats[0].raceCount > 0) {
+            await db.update(userStats)
+              .set({
+                raceCount: stats[0].raceCount - 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+          }
+        });
+      
+      return res.status(200).json({
+        message: "Razza eliminata con successo"
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione della razza:", error);
+      return res.status(500).json({ message: "Errore nell'eliminazione della razza" });
+    }
+  });
+  
+  // API MAPS
+  // API per ottenere tutte le mappe dell'utente
+  app.get("/api/maps", async (req, res) => {
+    try {
+      const userMaps = await db.select().from(maps)
+        .where(eq(maps.userId, (req as any).userId))
+        .orderBy(asc(maps.name));
+      
+      return res.status(200).json(userMaps);
+    } catch (error) {
+      console.error("Errore nel recuperare le mappe:", error);
+      return res.status(500).json({ message: "Errore nel recuperare le mappe" });
+    }
+  });
+  
+  // API per ottenere una mappa specifica
+  app.get("/api/maps/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const map = await db.select().from(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!map.length) {
+        return res.status(404).json({ message: "Mappa non trovata" });
+      }
+      
+      return res.status(200).json(map[0]);
+    } catch (error) {
+      console.error("Errore nel recuperare la mappa:", error);
+      return res.status(500).json({ message: "Errore nel recuperare la mappa" });
+    }
+  });
+  
+  // API per creare una nuova mappa
+  app.post("/api/maps", async (req, res) => {
+    try {
+      const mapSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        description: z.string().optional(),
+        imageData: z.string().min(1, "L'immagine è obbligatoria"),
+        points: z.array(z.any()).optional()
+      });
+      
+      // Valida i dati
+      const validatedData = mapSchema.parse(req.body);
+      
+      // Converti i punti in formato JSON se presenti
+      const points = validatedData.points ? JSON.stringify(validatedData.points) : '[]';
+      
+      // Crea una nuova mappa
+      const [map] = await db.insert(maps)
+        .values({
+          id: generateId('map'),
+          userId: (req as any).userId,
+          name: validatedData.name,
+          description: validatedData.description,
+          imageData: validatedData.imageData,
+          points
+        })
+        .returning();
+      
+      // Incrementa il contatore dei luoghi nelle statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0) {
+            await db.update(userStats)
+              .set({
+                placeCount: stats[0].placeCount + 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+            
+            // Verifica e aggiorna gli achievement
+            await checkAndUpdateAchievements({
+              ...stats[0],
+              placeCount: stats[0].placeCount + 1
+            });
+          }
+        });
+      
+      return res.status(201).json({
+        message: "Mappa creata con successo",
+        map
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della mappa non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nella creazione della mappa:", error);
+      return res.status(500).json({ message: "Errore nella creazione della mappa" });
+    }
+  });
+  
+  // API per aggiornare una mappa esistente
+  app.put("/api/maps/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la mappa esista e appartenga all'utente
+      const map = await db.select().from(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!map.length) {
+        return res.status(404).json({ message: "Mappa non trovata" });
+      }
+      
+      const mapSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        description: z.string().optional().nullable(),
+        imageData: z.string().min(1, "L'immagine è obbligatoria"),
+        points: z.array(z.any()).optional()
+      });
+      
+      // Valida i dati
+      const validatedData = mapSchema.parse(req.body);
+      
+      // Converti i punti in formato JSON se presenti
+      const points = validatedData.points ? JSON.stringify(validatedData.points) : '[]';
+      
+      // Aggiorna la mappa
+      const [updatedMap] = await db.update(maps)
+        .set({
+          name: validatedData.name,
+          description: validatedData.description,
+          imageData: validatedData.imageData,
+          points,
+          updatedAt: new Date()
+        })
+        .where(eq(maps.id, id))
+        .returning();
+      
+      return res.status(200).json({
+        message: "Mappa aggiornata con successo",
+        map: updatedMap
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della mappa non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nell'aggiornamento della mappa:", error);
+      return res.status(500).json({ message: "Errore nell'aggiornamento della mappa" });
+    }
+  });
+  
+  // API per eliminare una mappa
+  app.delete("/api/maps/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la mappa esista e appartenga all'utente
+      const map = await db.select().from(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!map.length) {
+        return res.status(404).json({ message: "Mappa non trovata" });
+      }
+      
+      // Elimina la mappa
+      await db.delete(maps)
+        .where(eq(maps.id, id));
+      
+      // Aggiorna le statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0 && stats[0].placeCount > 0) {
+            await db.update(userStats)
+              .set({
+                placeCount: stats[0].placeCount - 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+          }
+        });
+      
+      return res.status(200).json({
+        message: "Mappa eliminata con successo"
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione della mappa:", error);
+      return res.status(500).json({ message: "Errore nell'eliminazione della mappa" });
+    }
+  });
+  
+  // API EVENTS
+  // API per ottenere tutti gli eventi dell'utente
+  app.get("/api/events", async (req, res) => {
+    try {
+      const userEvents = await db.select().from(events)
+        .where(eq(events.userId, (req as any).userId))
+        .orderBy(desc(events.importance));
+      
+      return res.status(200).json(userEvents);
+    } catch (error) {
+      console.error("Errore nel recuperare gli eventi:", error);
+      return res.status(500).json({ message: "Errore nel recuperare gli eventi" });
+    }
+  });
+  
+  // API per ottenere un evento specifico
+  app.get("/api/events/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const event = await db.select().from(events)
+        .where(and(
+          eq(events.id, id),
+          eq(events.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!event.length) {
+        return res.status(404).json({ message: "Evento non trovato" });
+      }
+      
+      return res.status(200).json(event[0]);
+    } catch (error) {
+      console.error("Errore nel recuperare l'evento:", error);
+      return res.status(500).json({ message: "Errore nel recuperare l'evento" });
+    }
+  });
+  
+  // API per creare un nuovo evento
+  app.post("/api/events", async (req, res) => {
+    try {
+      const eventSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        description: z.string().optional(),
+        date: z.string().optional(),
+        importance: z.number().min(0).max(10).default(0),
+        involvedCharacters: z.array(z.string()).optional(),
+        locations: z.array(z.string()).optional()
+      });
+      
+      // Valida i dati
+      const validatedData = eventSchema.parse(req.body);
+      
+      // Converti gli array in formato JSON
+      const involvedCharacters = validatedData.involvedCharacters 
+        ? JSON.stringify(validatedData.involvedCharacters) 
+        : '[]';
+      
+      const locations = validatedData.locations 
+        ? JSON.stringify(validatedData.locations) 
+        : '[]';
+      
+      // Crea un nuovo evento
+      const [event] = await db.insert(events)
+        .values({
+          id: generateId('event'),
+          userId: (req as any).userId,
+          name: validatedData.name,
+          description: validatedData.description,
+          date: validatedData.date,
+          importance: validatedData.importance,
+          involvedCharacters,
+          locations
+        })
+        .returning();
+      
+      // Incrementa il contatore degli eventi nelle statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0) {
+            await db.update(userStats)
+              .set({
+                eventCount: stats[0].eventCount + 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+            
+            // Verifica e aggiorna gli achievement
+            await checkAndUpdateAchievements({
+              ...stats[0],
+              eventCount: stats[0].eventCount + 1
+            });
+          }
+        });
+      
+      return res.status(201).json({
+        message: "Evento creato con successo",
+        event
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati dell'evento non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nella creazione dell'evento:", error);
+      return res.status(500).json({ message: "Errore nella creazione dell'evento" });
+    }
+  });
+  
+  // API per aggiornare un evento esistente
+  app.put("/api/events/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che l'evento esista e appartenga all'utente
+      const event = await db.select().from(events)
+        .where(and(
+          eq(events.id, id),
+          eq(events.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!event.length) {
+        return res.status(404).json({ message: "Evento non trovato" });
+      }
+      
+      const eventSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        description: z.string().optional().nullable(),
+        date: z.string().optional().nullable(),
+        importance: z.number().min(0).max(10).default(0),
+        involvedCharacters: z.array(z.string()).optional(),
+        locations: z.array(z.string()).optional()
+      });
+      
+      // Valida i dati
+      const validatedData = eventSchema.parse(req.body);
+      
+      // Converti gli array in formato JSON
+      const involvedCharacters = validatedData.involvedCharacters 
+        ? JSON.stringify(validatedData.involvedCharacters) 
+        : '[]';
+      
+      const locations = validatedData.locations 
+        ? JSON.stringify(validatedData.locations) 
+        : '[]';
+      
+      // Aggiorna l'evento
+      const [updatedEvent] = await db.update(events)
+        .set({
+          name: validatedData.name,
+          description: validatedData.description,
+          date: validatedData.date,
+          importance: validatedData.importance,
+          involvedCharacters,
+          locations,
+          updatedAt: new Date()
+        })
+        .where(eq(events.id, id))
+        .returning();
+      
+      return res.status(200).json({
+        message: "Evento aggiornato con successo",
+        event: updatedEvent
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati dell'evento non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nell'aggiornamento dell'evento:", error);
+      return res.status(500).json({ message: "Errore nell'aggiornamento dell'evento" });
+    }
+  });
+  
+  // API per eliminare un evento
+  app.delete("/api/events/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che l'evento esista e appartenga all'utente
+      const event = await db.select().from(events)
+        .where(and(
+          eq(events.id, id),
+          eq(events.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!event.length) {
+        return res.status(404).json({ message: "Evento non trovato" });
+      }
+      
+      // Elimina l'evento
+      await db.delete(events)
+        .where(eq(events.id, id));
+      
+      // Aggiorna le statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0 && stats[0].eventCount > 0) {
+            await db.update(userStats)
+              .set({
+                eventCount: stats[0].eventCount - 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+          }
+        });
+      
+      return res.status(200).json({
+        message: "Evento eliminato con successo"
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione dell'evento:", error);
+      return res.status(500).json({ message: "Errore nell'eliminazione dell'evento" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
