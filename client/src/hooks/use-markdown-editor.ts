@@ -333,10 +333,15 @@ export function useMarkdownEditor() {
     console.log("Ricerca entità con query:", query);
     console.log("Entità disponibili per la ricerca:", linkedEntities);
     
-    if (!query) {
+    if (!query || query.trim() === "") {
       // Se non c'è query, mostra tutte le entità disponibili
       console.log("Mostro tutte le entità:", linkedEntities);
-      setEntitySearchResults({ entities: linkedEntities, query: "" });
+      
+      // Assicuriamoci di aggiornare effettivamente lo stato con le entità caricate
+      setEntitySearchResults({ 
+        entities: [...linkedEntities], // Creiamo una copia dell'array per assicurarci che React rilevi il cambiamento
+        query: "" 
+      });
       return;
     }
     

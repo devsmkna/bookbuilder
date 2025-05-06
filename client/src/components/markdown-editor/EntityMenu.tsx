@@ -21,6 +21,8 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
   const [, navigate] = useLocation();
   const { entities, query } = searchResults;
   
+  console.log("EntityMenu rendering, entities:", entities);
+  
   // Raggruppa le entità per tipo
   const groupedEntities = entities.reduce((acc, entity) => {
     if (!acc[entity.type]) {
