@@ -7,10 +7,15 @@ import {
   userAchievements,
   achievementDefinitions,
   writingSessions,
-  documents
+  documents,
+  characters,
+  races,
+  maps,
+  events
 } from "../shared/schema";
 import { eq, and, desc, asc, gte, lte, sql } from "drizzle-orm";
 import { z } from "zod";
+import { generateId } from "./utils";
 
 // Crea un utente temporaneo se non esiste
 async function getOrCreateDefaultUser() {

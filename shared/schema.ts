@@ -11,11 +11,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
-export const usersRelations = relations(users, ({ one, many }) => ({
-  userStats: one(userStats),
-  achievements: many(userAchievements),
-  writingSessions: many(writingSessions)
-}));
+// Relazioni utente definite più in dettaglio dopo aver creato tutte le tabelle
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -30,7 +26,8 @@ export const entityTypeEnum = pgEnum('entity_type', [
   'character', 
   'place', 
   'race', 
-  'event'
+  'event',
+  'map'
 ]);
 
 // Enum per le categorie di achievement
@@ -193,4 +190,170 @@ export const entityLinksRelations = relations(entityLinks, ({ one }) => ({
     fields: [entityLinks.documentId],
     references: [documents.id]
   })
+}));
+
+// Personaggi
+export const characters = pgTable("characters", {
+  id: text("id").primaryKey(), // UUID o altro identificatore univoco
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Informazioni di base
+  name: text("name").notNull(),
+  pronunciation: text("pronunciation"),
+  aliases: text("aliases"),
+  age: text("age"),
+  race: text("race"),
+  imageData: text("image_data"), // Base64 encoded image
+  
+  // Tratti fisici
+  eyeColor: text("eye_color"),
+  secondEyeColor: text("second_eye_color"), // Per occhi eterochromici
+  hasHeterochromia: boolean("has_heterochromia").default(false),
+  hairColor: text("hair_color"),
+  skinColor: text("skin_color"),
+  height: text("height"),
+  bodyType: text("body_type"),
+
+  // Comportamento
+  attitude: text("attitude"),
+  bodyLanguage: text("body_language"),
+  bodySigns: text("body_signs"),
+  
+  // Personale
+  parentalRelationship: text("parental_relationship"),
+  parentalTeachings: text("parental_teachings"),
+  respect: text("respect"),
+  hates: text("hates"),
+  fears: text("fears"),
+  contradictions: text("contradictions"),
+  dreams: text("dreams"),
+  sacrificeForDreams: text("sacrifice_for_dreams"),
+  values: text("values"),
+  antiValues: text("anti_values"),
+  
+  // Evoluzione
+  motivationEvolution: text("motivation_evolution"),
+  emotionalEvolution: text("emotional_evolution"),
+  relationshipEvolution: text("relationship_evolution"),
+  dreamEvolution: text("dream_evolution"),
+  
+  // Metadati
+  completionPercentage: integer("completion_percentage").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const charactersRelations = relations(characters, ({ one }) => ({
+  user: one(users, {
+    fields: [characters.userId],
+    references: [users.id]
+  })
+}));
+
+export const characterInsertSchema = createInsertSchema(characters);
+export const characterSelectSchema = createSelectSchema(characters);
+export type CharacterInsert = z.infer<typeof characterInsertSchema>;
+export type Character = typeof characters.$inferSelect;
+
+// Razze
+export const races = pgTable("races", {
+  id: text("id").primaryKey(), // UUID o altro identificatore univoco
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Informazioni di base
+  name: text("name").notNull(),
+  lore: text("lore"), // Storia e background
+  traits: text("traits"), // Caratteristiche fisiche e comportamentali
+  society: text("society"), // Organizzazione sociale
+  habitat: text("habitat"), // Ambiente in cui vivono
+  imageData: text("image_data"), // Base64 encoded image
+  
+  // Metadati
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const racesRelations = relations(races, ({ one }) => ({
+  user: one(users, {
+    fields: [races.userId],
+    references: [users.id]
+  })
+}));
+
+export const raceInsertSchema = createInsertSchema(races);
+export const raceSelectSchema = createSelectSchema(races);
+export type RaceInsert = z.infer<typeof raceInsertSchema>;
+export type Race = typeof races.$inferSelect;
+
+// Mappe
+export const maps = pgTable("maps", {
+  id: text("id").primaryKey(), // UUID o altro identificatore univoco
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Informazioni di base
+  name: text("name").notNull(),
+  description: text("description"),
+  imageData: text("image_data").notNull(), // Base64 encoded image
+  
+  // Coordinate dei punti di interesse sulla mappa (in formato JSON)
+  points: jsonb("points").default('[]'),
+  
+  // Metadati
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const mapsRelations = relations(maps, ({ one }) => ({
+  user: one(users, {
+    fields: [maps.userId],
+    references: [users.id]
+  })
+}));
+
+export const mapInsertSchema = createInsertSchema(maps);
+export const mapSelectSchema = createSelectSchema(maps);
+export type MapInsert = z.infer<typeof mapInsertSchema>;
+export type Map = typeof maps.$inferSelect;
+
+// Eventi
+export const events = pgTable("events", {
+  id: text("id").primaryKey(), // UUID o altro identificatore univoco
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Informazioni di base
+  name: text("name").notNull(),
+  description: text("description"),
+  date: text("date"), // Data dell'evento nel mondo della storia
+  importance: integer("importance").default(0), // Scala 0-10 dell'importanza
+  
+  // Relazioni
+  involvedCharacters: jsonb("involved_characters").default('[]'), // IDs dei personaggi coinvolti
+  locations: jsonb("locations").default('[]'), // Luoghi in cui si svolge
+  
+  // Metadati
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  user: one(users, {
+    fields: [events.userId],
+    references: [users.id]
+  })
+}));
+
+export const eventInsertSchema = createInsertSchema(events);
+export const eventSelectSchema = createSelectSchema(events);
+export type EventInsert = z.infer<typeof eventInsertSchema>;
+export type Event = typeof events.$inferSelect;
+
+// Relazioni utente complete che includono tutte le entità
+export const usersRelations = relations(users, ({ one, many }) => ({
+  userStats: one(userStats),
+  achievements: many(userAchievements),
+  writingSessions: many(writingSessions),
+  characters: many(characters),
+  races: many(races),
+  maps: many(maps),
+  events: many(events)
 }));
