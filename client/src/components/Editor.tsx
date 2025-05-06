@@ -31,7 +31,6 @@ export default function Editor() {
     formatSelectedText,
     handleSelectionChange,
     saveTemporaryContent,
-    processContent,
     createWikiLink
   } = useEditor();
 
@@ -103,7 +102,7 @@ export default function Editor() {
     if (savedContent && savedContent !== content) {
       setContent(savedContent);
     }
-  }, []);
+  }, [content, setContent]);
 
   const handleOpenSidebar = () => {
     setIsSidebarOpen(true);
