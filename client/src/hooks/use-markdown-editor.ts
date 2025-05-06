@@ -70,20 +70,24 @@ export function useMarkdownEditor() {
     const loadEntities = () => {
       let entities: LinkedEntity[] = [];
       
+      console.log("Caricamento entità in corso...");
+      
       // Carica i personaggi
       try {
         const savedCharacters = localStorage.getItem('characters');
+        console.log("Characters localStorage:", savedCharacters);
         if (savedCharacters) {
           const characters = JSON.parse(savedCharacters);
-          entities = entities.concat(
-            characters.map((char: any) => ({
-              id: char.id,
-              name: char.name || "Unnamed Character",
-              type: 'character',
-              description: `${char.race || ""} ${char.age ? `(${char.age})` : ""}`.trim(),
-              imageUrl: char.imageData || ""
-            }))
-          );
+          console.log("Personaggi trovati:", characters.length);
+          const mappedCharacters = characters.map((char: any) => ({
+            id: char.id,
+            name: char.name || "Unnamed Character",
+            type: 'character' as const,
+            description: `${char.race || ""} ${char.age ? `(${char.age})` : ""}`.trim(),
+            imageUrl: char.imageData || ""
+          }));
+          entities = [...entities, ...mappedCharacters];
+          console.log("Personaggi aggiunti:", mappedCharacters.length);
         }
       } catch (e) {
         console.error('Failed to load characters:', e);
@@ -92,6 +96,7 @@ export function useMarkdownEditor() {
       // Carica i luoghi da worldMaps
       try {
         const savedMaps = localStorage.getItem('worldMaps');
+        console.log("Maps localStorage:", savedMaps ? "Presente" : "Assente");
         if (savedMaps) {
           const maps = JSON.parse(savedMaps);
           // Estrai tutti i luoghi da tutte le mappe
@@ -102,15 +107,16 @@ export function useMarkdownEditor() {
             }
           });
           
-          entities = entities.concat(
-            allPlaces.map((place: any) => ({
-              id: place.id,
-              name: place.name || "Unnamed Place",
-              type: 'place',
-              description: place.type || "",
-              imageUrl: place.images?.[0] || ""
-            }))
-          );
+          console.log("Luoghi trovati:", allPlaces.length);
+          const mappedPlaces = allPlaces.map((place: any) => ({
+            id: place.id,
+            name: place.name || "Unnamed Place",
+            type: 'place' as const,
+            description: place.type || "",
+            imageUrl: place.images?.[0] || ""
+          }));
+          entities = [...entities, ...mappedPlaces];
+          console.log("Luoghi aggiunti:", mappedPlaces.length);
         }
       } catch (e) {
         console.error('Failed to load places:', e);
@@ -119,17 +125,19 @@ export function useMarkdownEditor() {
       // Carica le razze
       try {
         const savedRaces = localStorage.getItem('book-builder-races');
+        console.log("Races localStorage:", savedRaces ? "Presente" : "Assente");
         if (savedRaces) {
           const races = JSON.parse(savedRaces);
-          entities = entities.concat(
-            races.map((race: any) => ({
-              id: race.id,
-              name: race.name || "Unnamed Race",
-              type: 'race',
-              description: race.traits || "",
-              imageUrl: race.imageData || ""
-            }))
-          );
+          console.log("Razze trovate:", races.length);
+          const mappedRaces = races.map((race: any) => ({
+            id: race.id,
+            name: race.name || "Unnamed Race",
+            type: 'race' as const,
+            description: race.traits || "",
+            imageUrl: race.imageData || ""
+          }));
+          entities = [...entities, ...mappedRaces];
+          console.log("Razze aggiunte:", mappedRaces.length);
         }
       } catch (e) {
         console.error('Failed to load races:', e);
@@ -138,30 +146,48 @@ export function useMarkdownEditor() {
       // Carica gli eventi
       try {
         const savedEvents = localStorage.getItem('book-builder-storyboard');
+        console.log("Events localStorage:", savedEvents ? "Presente" : "Assente");
         if (savedEvents) {
           const events = JSON.parse(savedEvents);
-          entities = entities.concat(
-            events.map((event: any) => ({
-              id: event.id,
-              name: event.title || "Unnamed Event",
-              type: 'event',
-              description: event.description || "",
-            }))
-          );
+          console.log("Eventi trovati:", events.length);
+          const mappedEvents = events.map((event: any) => ({
+            id: event.id,
+            name: event.title || "Unnamed Event",
+            type: 'event' as const,
+            description: event.description || "",
+          }));
+          entities = [...entities, ...mappedEvents];
+          console.log("Eventi aggiunti:", mappedEvents.length);
         }
       } catch (e) {
         console.error('Failed to load events:', e);
       }
       
       // Log per debug
+      console.log("Totale entità caricate:", entities.length);
       console.log("Entità caricate:", entities);
       
-      setLinkedEntities(entities);
+      // Aggiorna lo stato solo se ci sono effettivamente delle entità
+      setLinkedEntities([...entities]);
+      
+      // Precarica anche il risultato della ricerca vuota con tutte le entità
+      setEntitySearchResults({
+        entities: [...entities],
+        query: ""
+      });
     };
     
+    // Carica le entità al primo render
     loadEntities();
     
-    // Aggiungi un event listener per aggiornare le entità quando localStorage cambia
+    // Crea un intervallo per ricaricare le entità periodicamente
+    // Questo è utile perché l'evento 'storage' potrebbe non essere affidabile
+    // tra componenti della stessa pagina
+    const interval = setInterval(() => {
+      loadEntities();
+    }, 3000);
+    
+    // Aggiungi anche un event listener per aggiornare le entità quando localStorage cambia
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'characters' || 
           e.key === 'worldMaps' || 
@@ -172,7 +198,9 @@ export function useMarkdownEditor() {
     };
     
     window.addEventListener('storage', handleStorageChange);
+    
     return () => {
+      clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
