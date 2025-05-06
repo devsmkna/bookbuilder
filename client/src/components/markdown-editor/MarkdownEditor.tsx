@@ -321,6 +321,37 @@ const MarkdownEditor: React.FC = () => {
     restoreTemporaryContent();
   }, [restoreTemporaryContent]);
   
+  // Gestisce lo scorrimento ai risultati di ricerca
+  useEffect(() => {
+    // Funzione per gestire l'evento di scorrimento ai risultati di ricerca
+    const handleSearchResultScroll = (event: CustomEvent) => {
+      if (!textareaRef.current) return;
+      
+      const { position, length } = event.detail;
+      const textarea = textareaRef.current;
+      
+      // Imposta la posizione del cursore
+      textarea.focus();
+      textarea.setSelectionRange(position, position + length);
+      
+      // Scorre al testo selezionato
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight || '20');
+      const textBeforeMatch = content.substring(0, position);
+      const linesBefore = textBeforeMatch.split('\n').length - 1;
+      
+      // Calcola la posizione approssimativa di scorrimento
+      const scrollPosition = linesBefore * lineHeight;
+      textarea.scrollTop = scrollPosition - (textarea.clientHeight / 2);
+    };
+    
+    // Aggiungi l'event listener per l'evento personalizzato
+    window.addEventListener('search-result-scroll', handleSearchResultScroll as EventListener);
+    
+    return () => {
+      window.removeEventListener('search-result-scroll', handleSearchResultScroll as EventListener);
+    };
+  }, [content, textareaRef]);
+  
   return (
     <div className={cn(
       "min-h-screen flex flex-col",

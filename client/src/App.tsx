@@ -11,6 +11,8 @@ import RaceManagement from "@/pages/RaceManagement";
 import StoryboardPlanner from "@/pages/StoryboardPlanner";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { GamificationProvider } from "@/context/GamificationContext";
+import GlobalSearch from "@/components/GlobalSearch";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 
 function Router() {
   return (
@@ -26,13 +28,29 @@ function Router() {
   );
 }
 
+function AppContent() {
+  // Utilizziamo il hook per la ricerca globale
+  const { isOpen, closeSearch, handleNavigateToResult } = useGlobalSearch();
+  
+  return (
+    <>
+      <Router />
+      <Toaster />
+      <GlobalSearch 
+        isOpen={isOpen} 
+        onClose={closeSearch} 
+        onNavigate={handleNavigateToResult} 
+      />
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="book-builder-theme">
         <GamificationProvider>
-          <Router />
-          <Toaster />
+          <AppContent />
         </GamificationProvider>
       </ThemeProvider>
     </QueryClientProvider>
