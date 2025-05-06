@@ -1,0 +1,127 @@
+/* Stili per l'editor markdown */
+
+/* Container principale */
+.editor-container {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Textarea dell'editor */
+.markdown-textarea-container textarea {
+  font-family: "Menlo", "Monaco", "Consolas", monospace;
+  line-height: 1.6;
+  overflow-y: auto;
+  border: none;
+  outline: none;
+  resize: none;
+  transition: all 0.2s ease;
+}
+
+/* Preview area */
+.markdown-preview {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  overflow-y: auto;
+}
+
+/* Markdown styling per la preview */
+.markdown-preview h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.markdown-preview h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.75rem;
+  padding-bottom: 0.2rem;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1rem 0 0.75rem;
+}
+
+.markdown-preview p {
+  margin: 0.75rem 0;
+}
+
+.markdown-preview blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+.markdown-preview code {
+  font-family: "Menlo", "Monaco", "Consolas", monospace;
+  background-color: hsl(var(--muted));
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.markdown-preview ul {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.markdown-preview li {
+  margin: 0.25rem 0;
+}
+
+/* Link entità */
+.entity-link {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  text-decoration: none;
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.entity-link.entity-character {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: rgb(37, 99, 235);
+}
+
+.entity-link.entity-place {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: rgb(5, 150, 105);
+}
+
+.entity-link.entity-race {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: rgb(217, 119, 6);
+}
+
+.entity-link.entity-event {
+  background-color: rgba(139, 92, 246, 0.1);
+  color: rgb(109, 40, 217);
+}
+
+/* Tooltips */
+.entity-tooltip {
+  max-width: 320px;
+  z-index: 100;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Menu formattazione */
+.format-menu {
+  transform-origin: center top;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.format-button:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}

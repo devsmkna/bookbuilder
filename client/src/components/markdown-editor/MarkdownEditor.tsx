@@ -18,6 +18,7 @@ import {
   Eye 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import "./editor-styles.css";
 
 const MarkdownEditor: React.FC = () => {
   const {
