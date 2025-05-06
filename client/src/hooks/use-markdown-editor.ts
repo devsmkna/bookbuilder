@@ -473,13 +473,14 @@ export function useMarkdownEditor() {
     
     if (tagStart > 0) tagStart--; // Include il carattere @
     
-    // Creiamo il nuovo link all'entità in formato Markdown
-    const link = `[${entity.name}](${entity.type}://${entity.id})`;
+    // Creiamo una sintassi più semplice ma conserviamo i dati necessari in attributi nascosti
+    // Format: @entity.name{type:id}
+    const mention = `@${entity.name}{${entity.type}:${entity.id}}`;
     
-    // Sostituisci @query con il link
+    // Sostituisci @query con la menzione
     const newContent = 
       text.substring(0, tagStart) + 
-      link + 
+      mention + 
       text.substring(cursorPos);
     
     setContent(newContent);
@@ -487,30 +488,44 @@ export function useMarkdownEditor() {
     // Nascondi il menu delle entità
     setShowEntityMenu(false);
     
-    // Ripristina il focus su textarea e posiziona il cursore dopo il link
+    // Ripristina il focus su textarea e posiziona il cursore dopo la menzione
     setTimeout(() => {
       textarea.focus();
-      const newPosition = tagStart + link.length;
+      const newPosition = tagStart + mention.length;
       textarea.setSelectionRange(newPosition, newPosition);
     }, 0);
   }, []);
 
   // Parsa i link alle entità nel testo
   const parseEntityLinks = useCallback((text: string): string => {
-    const entityLinkRegex = /\[(.*?)\]\((character|place|race|event):\/\/(.*?)\)/g;
+    // Supporta il vecchio formato dei link per compatibilità
+    const oldEntityLinkRegex = /\[(.*?)\]\((character|place|race|event):\/\/(.*?)\)/g;
     
-    return text.replace(entityLinkRegex, (match, label, type, id) => {
+    text = text.replace(oldEntityLinkRegex, (match, label, type, id) => {
       // Trova l'entità corrispondente
       const entity = linkedEntities.find(e => e.id === id && e.type === type);
       
       if (entity) {
-        // Nell'anteprima, mostra solo il nome dell'entità come testo normale
-        // senza alcun link o formattazione speciale
+        // Nell'anteprima, mostra solo il nome dell'entità
         return label;
       }
       
-      // Se l'entità non viene trovata, mantieni il testo originale
       return label;
+    });
+    
+    // Supporta il nuovo formato @name{type:id}
+    const newEntityMentionRegex = /@([^{]+){(character|place|race|event):([^}]+)}/g;
+    
+    return text.replace(newEntityMentionRegex, (match, name, type, id) => {
+      // Trova l'entità corrispondente
+      const entity = linkedEntities.find(e => e.id === id && e.type === type);
+      
+      if (entity) {
+        // Nell'anteprima, mostra solo il nome dell'entità
+        return name;
+      }
+      
+      return name;
     });
   }, [linkedEntities]);
   

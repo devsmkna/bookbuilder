@@ -156,6 +156,7 @@ const MarkdownEditor: React.FC = () => {
   const handleEntityLinkHover = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     
+    // Per i vecchi link HTML delle entità
     if (target.tagName === 'A' && target.classList.contains('entity-link')) {
       const entityId = target.getAttribute('data-entity-id');
       const entityType = target.getAttribute('data-entity-type');
@@ -176,12 +177,39 @@ const MarkdownEditor: React.FC = () => {
           
           setHoveredEntity(entity);
           setShowTooltip(true);
+          return;
         }
       }
-    } else {
-      // Nascondi il tooltip quando si esce dall'elemento
-      setShowTooltip(false);
+    } 
+    
+    // Per le nuove menzioni @name{type:id}
+    const text = target.textContent || '';
+    const mentionRegex = /@([^{]+){(character|place|race|event):([^}]+)}/;
+    const match = text.match(mentionRegex);
+    
+    if (match) {
+      const [fullMatch, name, type, id] = match;
+      const entity = findEntityById(type, id);
+      
+      if (entity) {
+        // Calcola la posizione del tooltip
+        const rect = target.getBoundingClientRect();
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+        
+        setTooltipPosition({
+          top: rect.bottom + scrollTop,
+          left: rect.left + scrollLeft + (rect.width / 2)
+        });
+        
+        setHoveredEntity(entity);
+        setShowTooltip(true);
+        return;
+      }
     }
+    
+    // Se arriviamo qui, non abbiamo trovato un'entità
+    setShowTooltip(false);
   };
   
   // Gestisce click al di fuori dei menu
