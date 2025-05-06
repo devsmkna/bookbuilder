@@ -116,9 +116,9 @@ export default function StoryboardPlanner() {
 
   // Save story events to localStorage when updated
   useEffect(() => {
-    if (storyEvents.length > 0) {
-      localStorage.setItem('book-builder-storyboard', JSON.stringify(storyEvents));
-    }
+    // Salva sempre in localStorage, anche quando l'array è vuoto
+    // In questo modo quando eliminiamo tutti gli eventi, salveremo un array vuoto
+    localStorage.setItem('book-builder-storyboard', JSON.stringify(storyEvents));
   }, [storyEvents]);
 
   const createNewEvent = (type: EventType = "custom") => {
