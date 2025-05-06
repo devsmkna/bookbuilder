@@ -13,6 +13,8 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { GamificationProvider } from "@/context/GamificationContext";
 import GlobalSearch from "@/components/GlobalSearch";
 import { useGlobalSearch } from "@/hooks/use-global-search";
+import ProjectExportImport from "@/components/ProjectExportImport";
+import { useProjectExport } from "@/hooks/use-project-export";
 
 function Router() {
   return (
@@ -32,6 +34,9 @@ function AppContent() {
   // Utilizziamo il hook per la ricerca globale
   const { isOpen, closeSearch, handleNavigateToResult } = useGlobalSearch();
   
+  // Utilizziamo il hook per l'esportazione/importazione del progetto
+  const { isExportImportOpen, openExportImport, closeExportImport } = useProjectExport();
+  
   return (
     <>
       <Router />
@@ -40,6 +45,10 @@ function AppContent() {
         isOpen={isOpen} 
         onClose={closeSearch} 
         onNavigate={handleNavigateToResult} 
+      />
+      <ProjectExportImport
+        isOpen={isExportImportOpen}
+        onClose={closeExportImport}
       />
     </>
   );

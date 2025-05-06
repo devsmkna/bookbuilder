@@ -79,6 +79,17 @@ export default function Header({
           >
             {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
           </Button>
+          
+          {/* Export/Import toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenExportImport}
+            aria-label="Esporta/Importa Progetto"
+            title="Esporta/Importa Progetto"
+          >
+            <FileUp className="h-5 w-5" />
+          </Button>
         </div>
       </div>
     </header>
