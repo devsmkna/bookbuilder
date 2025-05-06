@@ -89,13 +89,21 @@ export function useMarkdownEditor() {
         console.error('Failed to load characters:', e);
       }
       
-      // Carica i luoghi
+      // Carica i luoghi da worldMaps
       try {
-        const savedPlaces = localStorage.getItem('world-builder-places');
-        if (savedPlaces) {
-          const places = JSON.parse(savedPlaces);
+        const savedMaps = localStorage.getItem('worldMaps');
+        if (savedMaps) {
+          const maps = JSON.parse(savedMaps);
+          // Estrai tutti i luoghi da tutte le mappe
+          let allPlaces: any[] = [];
+          maps.forEach((map: any) => {
+            if (map.places && Array.isArray(map.places)) {
+              allPlaces = allPlaces.concat(map.places);
+            }
+          });
+          
           entities = entities.concat(
-            places.map((place: any) => ({
+            allPlaces.map((place: any) => ({
               id: place.id,
               name: place.name || "Unnamed Place",
               type: 'place',
@@ -145,10 +153,28 @@ export function useMarkdownEditor() {
         console.error('Failed to load events:', e);
       }
       
+      // Log per debug
+      console.log("Entità caricate:", entities);
+      
       setLinkedEntities(entities);
     };
     
     loadEntities();
+    
+    // Aggiungi un event listener per aggiornare le entità quando localStorage cambia
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'characters' || 
+          e.key === 'worldMaps' || 
+          e.key === 'book-builder-races' || 
+          e.key === 'book-builder-storyboard') {
+        loadEntities();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
   
   // Aggiorna i conteggi parole/caratteri e salva quando il contenuto cambia

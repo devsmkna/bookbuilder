@@ -1,6 +1,7 @@
 import React from "react";
 import { LinkedEntity, EntitySearchResult } from "@/hooks/use-markdown-editor";
 import { User, MapPin, Users, CalendarDays } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface EntityMenuProps {
   show: boolean;
@@ -17,6 +18,7 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
 }) => {
   if (!show) return null;
   
+  const [, navigate] = useLocation();
   const { entities, query } = searchResults;
   
   // Raggruppa le entità per tipo
@@ -86,7 +88,9 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
                 className="px-2 py-1 text-xs bg-blue-500/10 text-blue-500 rounded-sm hover:bg-blue-500/20 flex items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  window.location.href = "/character-creation";
+                  // Salva il contenuto editor prima di navigare
+                  localStorage.setItem('editor-content', localStorage.getItem('editor-content') || '');
+                  navigate("/character-creation");
                 }}
               >
                 <User className="h-3 w-3 mr-1" />
@@ -97,7 +101,8 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
                 className="px-2 py-1 text-xs bg-green-500/10 text-green-500 rounded-sm hover:bg-green-500/20 flex items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  window.location.href = "/world-building";
+                  localStorage.setItem('editor-content', localStorage.getItem('editor-content') || '');
+                  navigate("/world-building");
                 }}
               >
                 <MapPin className="h-3 w-3 mr-1" />
@@ -108,7 +113,8 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
                 className="px-2 py-1 text-xs bg-amber-500/10 text-amber-500 rounded-sm hover:bg-amber-500/20 flex items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  window.location.href = "/race-management";
+                  localStorage.setItem('editor-content', localStorage.getItem('editor-content') || '');
+                  navigate("/race-management");
                 }}
               >
                 <Users className="h-3 w-3 mr-1" />
@@ -119,7 +125,8 @@ const EntityMenu: React.FC<EntityMenuProps> = ({
                 className="px-2 py-1 text-xs bg-purple-500/10 text-purple-500 rounded-sm hover:bg-purple-500/20 flex items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  window.location.href = "/storyboard-planner";
+                  localStorage.setItem('editor-content', localStorage.getItem('editor-content') || '');
+                  navigate("/storyboard-planner");
                 }}
               >
                 <CalendarDays className="h-3 w-3 mr-1" />
