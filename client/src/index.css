@@ -4,6 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Perrywood Font Definitions */
+@font-face {
+  font-family: 'Perrywood';
+  src: local('Georgia'), local('Times New Roman');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Perrywood';
+  src: local('Georgia Bold'), local('Times New Roman Bold');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

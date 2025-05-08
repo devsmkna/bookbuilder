@@ -4,6 +4,12 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
+    fontFamily: {
+      'sans': ['Perrywood', 'Inter', 'system-ui', 'sans-serif'],
+      'serif': ['Georgia', 'serif'],
+      'mono': ['SF Mono', 'Monaco', 'Consolas', 'monospace'],
+      'perrywood': ['Perrywood', 'sans-serif'],
+    },
     extend: {
       borderRadius: {
         lg: "var(--radius)",
