@@ -414,7 +414,7 @@ const MarkdownEditor: React.FC = () => {
         <div className="container mx-auto max-w-4xl px-4 py-6">
           <div className="editor-container bg-card rounded-lg shadow-sm border overflow-hidden">
             {/* Toolbar dell'editor */}
-            <div className="editor-toolbar p-2 border-b flex items-center justify-between">
+            <div className="editor-toolbar p-2 border-b flex items-center justify-between sticky top-0 z-10 bg-card">
               <div className="format-buttons flex flex-wrap gap-1">
                 <Button
                   variant="ghost"
@@ -552,14 +552,14 @@ const MarkdownEditor: React.FC = () => {
                       let newText;
                       if (start !== end) {
                         // Se c'è una selezione, la racchiude tra virgolette
-                        newText = content.substring(0, start) + '"' + selectedText + '"' + content.substring(end);
+                        newText = content.substring(0, start) + '«' + selectedText + '»' + content.substring(end);
                         textarea.focus();
                         setTimeout(() => {
                           textarea.setSelectionRange(start + selectedText.length + 2, start + selectedText.length + 2);
                         }, 0);
                       } else {
                         // Altrimenti inserisce solo le virgolette
-                        newText = content.substring(0, start) + '"' + content.substring(end);
+                        newText = content.substring(0, start) + '«»' + content.substring(end);
                         textarea.focus();
                         setTimeout(() => {
                           textarea.setSelectionRange(start + 1, start + 1);
@@ -569,9 +569,9 @@ const MarkdownEditor: React.FC = () => {
                       setContent(newText);
                     }
                   }}
-                  title="Virgolette"
+                  title="Guillemet"
                 >
-                  <span className="text-xs font-bold">"</span>
+                  <span className="text-xs font-bold">«»</span>
                 </Button>
                 <Separator orientation="vertical" className="h-8 mx-1" />
                 <Button
@@ -617,7 +617,7 @@ const MarkdownEditor: React.FC = () => {
                 <textarea
                   ref={textareaRef}
                   className={cn(
-                    "w-full min-h-[70vh] p-4 resize-none outline-none bg-card",
+                    "w-full min-h-[70vh] p-4 outline-none bg-card",
                     showMarkdownPreview ? "border-r" : ""
                   )}
                   value={content}
@@ -639,6 +639,7 @@ const MarkdownEditor: React.FC = () => {
                   onClick={handleEntityLinkClick}
                   onMouseOver={handleEntityLinkHover}
                   onMouseOut={() => setShowTooltip(false)}
+                  contentEditable
                 ></div>
               )}
               
