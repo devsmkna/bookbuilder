@@ -8,7 +8,7 @@
 
 /* Textarea dell'editor */
 .markdown-textarea-container textarea {
-  font-family: "Menlo", "Monaco", "Consolas", monospace;
+  @apply font-serif;
   line-height: 1.6;
   overflow-y: auto;
   border: none;
@@ -19,18 +19,27 @@
 
 /* Preview area */
 .markdown-preview {
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.6;
+  @apply font-serif;
+  text-align: justify;
+  line-height: 1.4;
   overflow-y: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 /* Markdown styling per la preview */
 .markdown-preview h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 1.5rem 0 0.75rem;
-  padding-bottom: 0.3rem;
-  border-bottom: 1px solid hsl(var(--border));
+  font-size: 1.5rem;
+  margin: 8rem 0 10rem;
+  text-align: center;
+}
+
+.markdown-preview h1:first-child {
+  margin-top: 0;
 }
 
 .markdown-preview h2 {
@@ -47,7 +56,8 @@
 }
 
 .markdown-preview p {
-  margin: 0.75rem 0;
+  margin: 0;
+  text-indent: 2rem;
 }
 
 .markdown-preview blockquote {

@@ -115,7 +115,7 @@
 
   /* Editor specific styles */
   .editor-content {
-    @apply min-h-[70vh] outline-none font-perrywood;
+    @apply min-h-[70vh] outline-none font-serif;
   }
 
   .editor-content h1, 
@@ -240,7 +240,7 @@
   
   /* WYSIWYG mode styling */
   .editor-wysiwyg {
-    @apply min-h-[70vh] outline-none font-perrywood;
+    @apply min-h-[70vh] outline-none font-serif;
     line-height: 1.7;
   }
   

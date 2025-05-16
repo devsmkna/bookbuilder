@@ -5,10 +5,9 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     fontFamily: {
-      'sans': ['Perrywood', 'Inter', 'system-ui', 'sans-serif'],
-      'serif': ['Georgia', 'serif'],
-      'mono': ['SF Mono', 'Monaco', 'Consolas', 'monospace'],
-      'perrywood': ['Perrywood', 'sans-serif'],
+      'sans': ['Inter', 'system-ui', 'sans-serif'],
+      'serif': ['Perrywood', 'Georgia', 'serif'],
+      'mono': ['SF Mono', 'Monaco', 'Consolas', 'monospace']
     },
     extend: {
       borderRadius: {

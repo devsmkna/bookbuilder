@@ -502,6 +502,81 @@ const MarkdownEditor: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => {
+                    if (textareaRef.current) {
+                      const textarea = textareaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const newText = content.substring(0, start) + "–" + content.substring(end);
+                      setContent(newText);
+                      setTimeout(() => {
+                        textarea.focus();
+                        textarea.setSelectionRange(start + 1, start + 1);
+                      }, 0);
+                    }
+                  }}
+                  title="En dash"
+                >
+                  <span className="text-xs font-bold">–</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (textareaRef.current) {
+                      const textarea = textareaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const newText = content.substring(0, start) + "—" + content.substring(end);
+                      setContent(newText);
+                      setTimeout(() => {
+                        textarea.focus();
+                        textarea.setSelectionRange(start + 1, start + 1);
+                      }, 0);
+                    }
+                  }}
+                  title="Em dash"
+                >
+                  <span className="text-xs font-bold">—</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (textareaRef.current) {
+                      const textarea = textareaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const selectedText = content.substring(start, end);
+                      
+                      let newText;
+                      if (start !== end) {
+                        // Se c'è una selezione, la racchiude tra virgolette
+                        newText = content.substring(0, start) + '"' + selectedText + '"' + content.substring(end);
+                        textarea.focus();
+                        setTimeout(() => {
+                          textarea.setSelectionRange(start + selectedText.length + 2, start + selectedText.length + 2);
+                        }, 0);
+                      } else {
+                        // Altrimenti inserisce solo le virgolette
+                        newText = content.substring(0, start) + '"' + content.substring(end);
+                        textarea.focus();
+                        setTimeout(() => {
+                          textarea.setSelectionRange(start + 1, start + 1);
+                        }, 0);
+                      }
+                      
+                      setContent(newText);
+                    }
+                  }}
+                  title="Virgolette"
+                >
+                  <span className="text-xs font-bold">"</span>
+                </Button>
+                <Separator orientation="vertical" className="h-8 mx-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
                   title="Inserisci [[menzione]] per linkare personaggi, luoghi o razze"
                 >
                   <Link2 className="h-4 w-4" />
@@ -537,12 +612,12 @@ const MarkdownEditor: React.FC = () => {
               {/* Textarea per l'editor Markdown */}
               <div className={cn(
                 "markdown-textarea-container", 
-                showMarkdownPreview ? "w-1/2" : "w-full"
+                showMarkdownPreview ? "hidden" : "w-full"
               )}>
                 <textarea
                   ref={textareaRef}
                   className={cn(
-                    "w-full min-h-[70vh] p-4 font-mono text-sm resize-none outline-none bg-card",
+                    "w-full min-h-[70vh] p-4 resize-none outline-none bg-card",
                     showMarkdownPreview ? "border-r" : ""
                   )}
                   value={content}
@@ -557,8 +632,9 @@ const MarkdownEditor: React.FC = () => {
               {/* Preview dell'HTML renderizzato */}
               {showMarkdownPreview && (
                 <div 
+                  lang="it-IT"
                   ref={previewRef}
-                  className="markdown-preview w-1/2 min-h-[70vh] p-4 overflow-auto"
+                  className="markdown-preview w-full min-h-[70vh] py-10 px-24 overflow-auto"
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
                   onClick={handleEntityLinkClick}
                   onMouseOver={handleEntityLinkHover}
