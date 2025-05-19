@@ -79,6 +79,12 @@ const handleApiResponse = async <T>(response: Response): Promise<T> => {
   return data as T;
 };
 
+// Funzione helper per eseguire richieste API con la corretta tipizzazione
+async function fetchApi<T>(method: string, url: string, data?: any): Promise<T> {
+  const response = await apiRequest(method, url, data);
+  return handleApiResponse<T>(response);
+}
+
 /**
  * Hook per gestire i personaggi
  */
@@ -94,8 +100,7 @@ export function useCharacters() {
   // Crea un nuovo personaggio
   const createCharacter = useMutation({
     mutationFn: async (character: Partial<Character>) => {
-      const response = await apiRequest('POST', '/api/characters', character);
-      return handleApiResponse<ApiResponse<Character>>(response);
+      return fetchApi<ApiResponse<Character>>('POST', '/api/characters', character);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/characters'] });
@@ -106,8 +111,7 @@ export function useCharacters() {
   const updateCharacter = useMutation({
     mutationFn: async (character: Partial<Character> & { id: string }) => {
       const { id, ...data } = character;
-      const response = await apiRequest('PUT', `/api/characters/${id}`, data);
-      return handleApiResponse<ApiResponse<Character>>(response);
+      return fetchApi<ApiResponse<Character>>('PUT', `/api/characters/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/characters'] });
@@ -117,8 +121,7 @@ export function useCharacters() {
   // Elimina un personaggio
   const deleteCharacter = useMutation({
     mutationFn: async (characterId: string) => {
-      const response = await apiRequest('DELETE', `/api/characters/${characterId}`);
-      return handleApiResponse<ApiResponse<void>>(response);
+      return fetchApi<ApiResponse<void>>('DELETE', `/api/characters/${characterId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/characters'] });
@@ -150,8 +153,7 @@ export function useRaces() {
   // Crea una nuova razza
   const createRace = useMutation({
     mutationFn: async (race: Partial<Race>) => {
-      const response = await apiRequest('POST', '/api/races', race);
-      return handleApiResponse<ApiResponse<Race>>(response);
+      return fetchApi<ApiResponse<Race>>('POST', '/api/races', race);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/races'] });
@@ -162,8 +164,7 @@ export function useRaces() {
   const updateRace = useMutation({
     mutationFn: async (race: Partial<Race> & { id: string }) => {
       const { id, ...data } = race;
-      const response = await apiRequest('PUT', `/api/races/${id}`, data);
-      return handleApiResponse<ApiResponse<Race>>(response);
+      return fetchApi<ApiResponse<Race>>('PUT', `/api/races/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/races'] });
@@ -173,8 +174,7 @@ export function useRaces() {
   // Elimina una razza
   const deleteRace = useMutation({
     mutationFn: async (raceId: string) => {
-      const response = await apiRequest('DELETE', `/api/races/${raceId}`);
-      return handleApiResponse<ApiResponse<void>>(response);
+      return fetchApi<ApiResponse<void>>('DELETE', `/api/races/${raceId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/races'] });
@@ -206,8 +206,7 @@ export function useMaps() {
   // Crea una nuova mappa
   const createMap = useMutation({
     mutationFn: async (map: Partial<Map>) => {
-      const response = await apiRequest('POST', '/api/maps', map);
-      return handleApiResponse<ApiResponse<Map>>(response);
+      return fetchApi<ApiResponse<Map>>('POST', '/api/maps', map);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/maps'] });
@@ -218,8 +217,7 @@ export function useMaps() {
   const updateMap = useMutation({
     mutationFn: async (map: Partial<Map> & { id: string }) => {
       const { id, ...data } = map;
-      const response = await apiRequest('PUT', `/api/maps/${id}`, data);
-      return handleApiResponse<ApiResponse<Map>>(response);
+      return fetchApi<ApiResponse<Map>>('PUT', `/api/maps/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/maps'] });
@@ -229,8 +227,7 @@ export function useMaps() {
   // Elimina una mappa
   const deleteMap = useMutation({
     mutationFn: async (mapId: string) => {
-      const response = await apiRequest('DELETE', `/api/maps/${mapId}`);
-      return handleApiResponse<ApiResponse<void>>(response);
+      return fetchApi<ApiResponse<void>>('DELETE', `/api/maps/${mapId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/maps'] });
@@ -262,8 +259,7 @@ export function useEvents() {
   // Crea un nuovo evento
   const createEvent = useMutation({
     mutationFn: async (event: Partial<Event>) => {
-      const response = await apiRequest('POST', '/api/events', event);
-      return handleApiResponse<ApiResponse<Event>>(response);
+      return fetchApi<ApiResponse<Event>>('POST', '/api/events', event);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -274,8 +270,7 @@ export function useEvents() {
   const updateEvent = useMutation({
     mutationFn: async (event: Partial<Event> & { id: string }) => {
       const { id, ...data } = event;
-      const response = await apiRequest('PUT', `/api/events/${id}`, data);
-      return handleApiResponse<ApiResponse<Event>>(response);
+      return fetchApi<ApiResponse<Event>>('PUT', `/api/events/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -285,8 +280,7 @@ export function useEvents() {
   // Elimina un evento
   const deleteEvent = useMutation({
     mutationFn: async (eventId: string) => {
-      const response = await apiRequest('DELETE', `/api/events/${eventId}`);
-      return handleApiResponse<ApiResponse<void>>(response);
+      return fetchApi<ApiResponse<void>>('DELETE', `/api/events/${eventId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -317,15 +311,13 @@ export function useDocuments() {
   
   // Carica un documento specifico
   const getDocument = useCallback(async (documentId: number) => {
-    const response = await apiRequest('GET', `/api/documents/${documentId}`);
-    return handleApiResponse(response);
+    return fetchApi<any>('GET', `/api/documents/${documentId}`);
   }, []);
   
   // Crea un nuovo documento
   const createDocument = useMutation({
     mutationFn: async ({ title, content }: { title: string; content: string }) => {
-      const response = await apiRequest('POST', '/api/documents', { title, content });
-      return handleApiResponse<ApiResponse<any>>(response);
+      return fetchApi<ApiResponse<any>>('POST', '/api/documents', { title, content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -335,8 +327,7 @@ export function useDocuments() {
   // Aggiorna un documento esistente
   const updateDocument = useMutation({
     mutationFn: async ({ id, title, content }: { id: number; title: string; content: string }) => {
-      const response = await apiRequest('PUT', `/api/documents/${id}`, { title, content });
-      return handleApiResponse<ApiResponse<any>>(response);
+      return fetchApi<ApiResponse<any>>('PUT', `/api/documents/${id}`, { title, content });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -347,8 +338,7 @@ export function useDocuments() {
   // Elimina un documento
   const deleteDocument = useMutation({
     mutationFn: async (documentId: number) => {
-      const response = await apiRequest('DELETE', `/api/documents/${documentId}`);
-      return handleApiResponse<ApiResponse<void>>(response);
+      return fetchApi<ApiResponse<void>>('DELETE', `/api/documents/${documentId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -413,6 +403,10 @@ export function useDataMigration() {
             locations: event.locations || []
           });
         }
+        console.log('Eventi trovati:', events.length);
+        console.log('Eventi aggiunti:', events.length);
+      } else {
+        console.log('Events localStorage:', 'Assente');
       }
       
       // Migra personaggi
@@ -422,6 +416,10 @@ export function useDataMigration() {
         for (const character of characters) {
           await createCharacter.mutateAsync(character);
         }
+        console.log('Personaggi trovati:', characters.length);
+        console.log('Personaggi aggiunti:', characters.length);
+      } else {
+        console.log('Characters localStorage:', null);
       }
       
       // Migra razze
@@ -431,6 +429,10 @@ export function useDataMigration() {
         for (const race of races) {
           await createRace.mutateAsync(race);
         }
+        console.log('Razze trovate:', races.length);
+        console.log('Razze aggiunte:', races.length);
+      } else {
+        console.log('Races localStorage:', 'Assente');
       }
       
       // Migra mappe
@@ -440,9 +442,14 @@ export function useDataMigration() {
         for (const map of maps) {
           await createMap.mutateAsync(map);
         }
+        console.log('Mappe trovate:', maps.length);
+        console.log('Mappe aggiunte:', maps.length);
+      } else {
+        console.log('Maps localStorage:', 'Assente');
       }
       
-      // Pulisci localStorage dopo la migrazione
+      // Per ora non puliamo localStorage fino a quando non confermiamo
+      // che la migrazione è stata completata con successo
       // localStorage.removeItem('events');
       // localStorage.removeItem('characters');
       // localStorage.removeItem('races');
