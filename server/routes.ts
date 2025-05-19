@@ -317,7 +317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         !currentStats.dailyGoalReached && 
         currentStats.wordCountToday + validatedData.wordCountToday >= currentStats.dailyWordGoal
       ) {
-        updates.dailyGoalReached = true;
+        updates.dailyGoalReached = 1; // Usiamo 1 invece di true per rispettare il tipo numerico nel DB
         updates.dailyGoalStreak = currentStats.dailyGoalStreak + 1;
       }
       
@@ -421,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const achievement = achievements[0];
       
       // Verifica se l'utente ha già questo achievement
-      const userAchievements = await db.select().from(userAchievements)
+      const userAchievementsResult = await db.select().from(userAchievements)
         .where(and(
           eq(userAchievements.userId, (req as any).userId),
           eq(userAchievements.achievementId, id)
@@ -430,8 +430,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let result;
       
-      if (userAchievements.length > 0) {
-        const userAchievement = userAchievements[0];
+      if (userAchievementsResult && Array.isArray(userAchievementsResult) && userAchievementsResult.length > 0) {
+        const userAchievement = userAchievementsResult[0];
         
         // Aggiorna l'achievement esistente
         [result] = await db.update(userAchievements)
