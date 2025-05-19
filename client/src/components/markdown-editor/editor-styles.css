@@ -10,11 +10,12 @@
 .markdown-textarea-container textarea {
   @apply font-serif;
   line-height: 1.6;
-  overflow-y: auto;
+  overflow-y: hidden;
   border: none;
   outline: none;
   resize: none;
   transition: all 0.2s ease;
+  field-sizing: content;
 }
 
 /* Preview area */

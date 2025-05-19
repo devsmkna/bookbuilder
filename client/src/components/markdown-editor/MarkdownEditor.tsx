@@ -393,6 +393,15 @@ const MarkdownEditor: React.FC = () => {
       window.removeEventListener('search-result-scroll', handleSearchResultScroll as EventListener);
     };
   }, [content, textareaRef]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto'; 
+      const newHeight = textarea.scrollHeight;
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [content, textareaRef]);
   
   return (
     <div className={cn(
@@ -411,8 +420,8 @@ const MarkdownEditor: React.FC = () => {
       />
       
       <main className="flex-1 overflow-auto" ref={editorRef}>
-        <div className="container mx-auto max-w-4xl px-4 py-6">
-          <div className="editor-container bg-card rounded-lg shadow-sm border overflow-hidden">
+        <div className="container mx-auto max-w-5xl py-6">
+          <div className="editor-container bg-card rounded-lg shadow-sm border overflow-hidden text-lg">
             {/* Toolbar dell'editor */}
             <div className="editor-toolbar p-2 border-b flex items-center justify-between sticky top-0 z-10 bg-card">
               <div className="format-buttons flex flex-wrap gap-1">
@@ -606,7 +615,7 @@ const MarkdownEditor: React.FC = () => {
             
             {/* Container flessibile per editor e preview */}
             <div className={cn(
-              "editor-content-container relative",
+              "editor-content-container relative py-10 px-24",
               showMarkdownPreview ? "flex" : "block"
             )}>
               {/* Textarea per l'editor Markdown */}
@@ -634,12 +643,11 @@ const MarkdownEditor: React.FC = () => {
                 <div 
                   lang="it-IT"
                   ref={previewRef}
-                  className="markdown-preview w-full min-h-[70vh] py-10 px-24 overflow-auto"
+                  className="markdown-preview w-full min-h-[70vh] overflow-auto"
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
                   onClick={handleEntityLinkClick}
                   onMouseOver={handleEntityLinkHover}
                   onMouseOut={() => setShowTooltip(false)}
-                  contentEditable
                 ></div>
               )}
               
