@@ -2,6 +2,12 @@ import { useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 
+// Tipi per le risposte dalle API
+interface ApiResponse<T> {
+  message?: string;
+  [key: string]: any;
+}
+
 // Tipi di entità
 export type EntityType = 'character' | 'place' | 'race' | 'event' | 'map';
 
@@ -67,6 +73,12 @@ export interface Event extends BaseEntity {
   locations?: string[];
 }
 
+// Helpers di utilità per le chiamate API
+const handleApiResponse = async <T>(response: Response): Promise<T> => {
+  const data = await response.json();
+  return data as T;
+};
+
 /**
  * Hook per gestire i personaggi
  */
@@ -82,13 +94,8 @@ export function useCharacters() {
   // Crea un nuovo personaggio
   const createCharacter = useMutation({
     mutationFn: async (character: Partial<Character>) => {
-      return apiRequest('/api/characters', {
-        method: 'POST',
-        body: JSON.stringify(character),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('POST', '/api/characters', character);
+      return handleApiResponse<ApiResponse<Character>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/characters'] });
@@ -98,13 +105,9 @@ export function useCharacters() {
   // Aggiorna un personaggio esistente
   const updateCharacter = useMutation({
     mutationFn: async (character: Partial<Character> & { id: string }) => {
-      return apiRequest(`/api/characters/${character.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(character),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { id, ...data } = character;
+      const response = await apiRequest('PUT', `/api/characters/${id}`, data);
+      return handleApiResponse<ApiResponse<Character>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/characters'] });
@@ -114,9 +117,8 @@ export function useCharacters() {
   // Elimina un personaggio
   const deleteCharacter = useMutation({
     mutationFn: async (characterId: string) => {
-      return apiRequest(`/api/characters/${characterId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/characters/${characterId}`);
+      return handleApiResponse<ApiResponse<void>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/characters'] });
@@ -148,13 +150,8 @@ export function useRaces() {
   // Crea una nuova razza
   const createRace = useMutation({
     mutationFn: async (race: Partial<Race>) => {
-      return apiRequest('/api/races', {
-        method: 'POST',
-        body: JSON.stringify(race),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('POST', '/api/races', race);
+      return handleApiResponse<ApiResponse<Race>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/races'] });
@@ -164,13 +161,9 @@ export function useRaces() {
   // Aggiorna una razza esistente
   const updateRace = useMutation({
     mutationFn: async (race: Partial<Race> & { id: string }) => {
-      return apiRequest(`/api/races/${race.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(race),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { id, ...data } = race;
+      const response = await apiRequest('PUT', `/api/races/${id}`, data);
+      return handleApiResponse<ApiResponse<Race>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/races'] });
@@ -180,9 +173,8 @@ export function useRaces() {
   // Elimina una razza
   const deleteRace = useMutation({
     mutationFn: async (raceId: string) => {
-      return apiRequest(`/api/races/${raceId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/races/${raceId}`);
+      return handleApiResponse<ApiResponse<void>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/races'] });
@@ -214,13 +206,8 @@ export function useMaps() {
   // Crea una nuova mappa
   const createMap = useMutation({
     mutationFn: async (map: Partial<Map>) => {
-      return apiRequest('/api/maps', {
-        method: 'POST',
-        body: JSON.stringify(map),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('POST', '/api/maps', map);
+      return handleApiResponse<ApiResponse<Map>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/maps'] });
@@ -230,13 +217,9 @@ export function useMaps() {
   // Aggiorna una mappa esistente
   const updateMap = useMutation({
     mutationFn: async (map: Partial<Map> & { id: string }) => {
-      return apiRequest(`/api/maps/${map.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(map),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { id, ...data } = map;
+      const response = await apiRequest('PUT', `/api/maps/${id}`, data);
+      return handleApiResponse<ApiResponse<Map>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/maps'] });
@@ -246,9 +229,8 @@ export function useMaps() {
   // Elimina una mappa
   const deleteMap = useMutation({
     mutationFn: async (mapId: string) => {
-      return apiRequest(`/api/maps/${mapId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/maps/${mapId}`);
+      return handleApiResponse<ApiResponse<void>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/maps'] });
@@ -280,13 +262,8 @@ export function useEvents() {
   // Crea un nuovo evento
   const createEvent = useMutation({
     mutationFn: async (event: Partial<Event>) => {
-      return apiRequest('/api/events', {
-        method: 'POST',
-        body: JSON.stringify(event),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('POST', '/api/events', event);
+      return handleApiResponse<ApiResponse<Event>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -296,13 +273,9 @@ export function useEvents() {
   // Aggiorna un evento esistente
   const updateEvent = useMutation({
     mutationFn: async (event: Partial<Event> & { id: string }) => {
-      return apiRequest(`/api/events/${event.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(event),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { id, ...data } = event;
+      const response = await apiRequest('PUT', `/api/events/${id}`, data);
+      return handleApiResponse<ApiResponse<Event>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -312,9 +285,8 @@ export function useEvents() {
   // Elimina un evento
   const deleteEvent = useMutation({
     mutationFn: async (eventId: string) => {
-      return apiRequest(`/api/events/${eventId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/events/${eventId}`);
+      return handleApiResponse<ApiResponse<void>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -344,23 +316,16 @@ export function useDocuments() {
   });
   
   // Carica un documento specifico
-  const getDocument = useCallback((documentId: number) => {
-    return queryClient.fetchQuery({
-      queryKey: [`/api/documents/${documentId}`],
-      queryFn: () => apiRequest(`/api/documents/${documentId}`),
-    });
-  }, [queryClient]);
+  const getDocument = useCallback(async (documentId: number) => {
+    const response = await apiRequest('GET', `/api/documents/${documentId}`);
+    return handleApiResponse(response);
+  }, []);
   
   // Crea un nuovo documento
   const createDocument = useMutation({
     mutationFn: async ({ title, content }: { title: string; content: string }) => {
-      return apiRequest('/api/documents', {
-        method: 'POST',
-        body: JSON.stringify({ title, content }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('POST', '/api/documents', { title, content });
+      return handleApiResponse<ApiResponse<any>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -370,13 +335,8 @@ export function useDocuments() {
   // Aggiorna un documento esistente
   const updateDocument = useMutation({
     mutationFn: async ({ id, title, content }: { id: number; title: string; content: string }) => {
-      return apiRequest(`/api/documents/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ title, content }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('PUT', `/api/documents/${id}`, { title, content });
+      return handleApiResponse<ApiResponse<any>>(response);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -387,9 +347,8 @@ export function useDocuments() {
   // Elimina un documento
   const deleteDocument = useMutation({
     mutationFn: async (documentId: number) => {
-      return apiRequest(`/api/documents/${documentId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/documents/${documentId}`);
+      return handleApiResponse<ApiResponse<void>>(response);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -398,10 +357,10 @@ export function useDocuments() {
   
   // Carica l'ultimo documento modificato
   const getLastEditedDocument = useCallback(async () => {
-    if (documents.length === 0) return null;
+    if (!documents || (documents as any[]).length === 0) return null;
     
     // Ordina i documenti per data di ultima modifica
-    const sortedDocuments = [...documents].sort((a: any, b: any) => 
+    const sortedDocuments = [...(documents as any[])].sort((a: any, b: any) => 
       new Date(b.lastEdited).getTime() - new Date(a.lastEdited).getTime()
     );
     
@@ -521,87 +480,97 @@ export function useEntitySearch() {
     const results: any[] = [];
     
     // Cerca nei personaggi
-    characters.forEach((character: Character) => {
-      if (character.name.toLowerCase().includes(lowerQuery) || 
-          (character.description && character.description.toLowerCase().includes(lowerQuery))) {
-        results.push({
-          id: character.id,
-          name: character.name,
-          type: 'character',
-          description: character.description
-        });
-      }
-    });
+    if (characters && Array.isArray(characters)) {
+      characters.forEach((character: Character) => {
+        if (character.name.toLowerCase().includes(lowerQuery) || 
+            (character.description && character.description.toLowerCase().includes(lowerQuery))) {
+          results.push({
+            id: character.id,
+            name: character.name,
+            type: 'character',
+            description: character.description
+          });
+        }
+      });
+    }
     
     // Cerca nelle razze
-    races.forEach((race: Race) => {
-      if (race.name.toLowerCase().includes(lowerQuery) || 
-          (race.description && race.description.toLowerCase().includes(lowerQuery))) {
-        results.push({
-          id: race.id,
-          name: race.name,
-          type: 'race',
-          description: race.description
-        });
-      }
-    });
+    if (races && Array.isArray(races)) {
+      races.forEach((race: Race) => {
+        if (race.name.toLowerCase().includes(lowerQuery) || 
+            (race.description && race.description.toLowerCase().includes(lowerQuery))) {
+          results.push({
+            id: race.id,
+            name: race.name,
+            type: 'race',
+            description: race.description
+          });
+        }
+      });
+    }
     
     // Cerca nelle mappe
-    maps.forEach((map: Map) => {
-      if (map.name.toLowerCase().includes(lowerQuery) || 
-          (map.description && map.description.toLowerCase().includes(lowerQuery))) {
-        results.push({
-          id: map.id,
-          name: map.name,
-          type: 'map',
-          description: map.description
-        });
-      }
-    });
+    if (maps && Array.isArray(maps)) {
+      maps.forEach((map: Map) => {
+        if (map.name.toLowerCase().includes(lowerQuery) || 
+            (map.description && map.description.toLowerCase().includes(lowerQuery))) {
+          results.push({
+            id: map.id,
+            name: map.name,
+            type: 'map',
+            description: map.description
+          });
+        }
+      });
+    }
     
     // Cerca negli eventi
-    events.forEach((event: Event) => {
-      if (event.name.toLowerCase().includes(lowerQuery) || 
-          (event.description && event.description.toLowerCase().includes(lowerQuery))) {
-        results.push({
-          id: event.id,
-          name: event.name,
-          type: 'event',
-          description: event.description
-        });
-      }
-    });
+    if (events && Array.isArray(events)) {
+      events.forEach((event: Event) => {
+        if (event.name.toLowerCase().includes(lowerQuery) || 
+            (event.description && event.description.toLowerCase().includes(lowerQuery))) {
+          results.push({
+            id: event.id,
+            name: event.name,
+            type: 'event',
+            description: event.description
+          });
+        }
+      });
+    }
     
     // Cerca nei documenti
-    documents.forEach((document: any) => {
-      if (document.title.toLowerCase().includes(lowerQuery) || 
-          (document.content && document.content.toLowerCase().includes(lowerQuery))) {
-        // Trova il contesto della corrispondenza nel contenuto
-        let context = '';
-        if (document.content) {
-          const index = document.content.toLowerCase().indexOf(lowerQuery);
-          if (index >= 0) {
-            const start = Math.max(0, index - 40);
-            const end = Math.min(document.content.length, index + lowerQuery.length + 40);
-            context = document.content.substring(start, end);
-            if (start > 0) context = '...' + context;
-            if (end < document.content.length) context = context + '...';
+    if (documents && Array.isArray(documents)) {
+      documents.forEach((document: any) => {
+        if (document.title.toLowerCase().includes(lowerQuery) || 
+            (document.content && document.content.toLowerCase().includes(lowerQuery))) {
+          // Trova il contesto della corrispondenza nel contenuto
+          let context = '';
+          if (document.content) {
+            const index = document.content.toLowerCase().indexOf(lowerQuery);
+            if (index >= 0) {
+              const start = Math.max(0, index - 40);
+              const end = Math.min(document.content.length, index + lowerQuery.length + 40);
+              context = document.content.substring(start, end);
+              if (start > 0) context = '...' + context;
+              if (end < document.content.length) context = context + '...';
+            }
           }
+          
+          results.push({
+            id: document.id,
+            name: document.title,
+            type: 'document',
+            description: document.content ? `${document.content.substring(0, 100)}...` : '',
+            context,
+            match: context ? {
+              start: context.indexOf(lowerQuery),
+              end: context.indexOf(lowerQuery) + lowerQuery.length
+            } : undefined
+          });
         }
-        
-        results.push({
-          id: document.id,
-          name: document.title,
-          type: 'document',
-          description: document.content ? `${document.content.substring(0, 100)}...` : '',
-          context,
-          match: context ? {
-            start: context.indexOf(lowerQuery),
-            end: context.indexOf(lowerQuery) + lowerQuery.length
-          } : undefined
-        });
-      }
-    });
+      });
+    }
     
     return results;
   }, [characters, races, maps, events, documents]);

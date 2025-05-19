@@ -1475,6 +1475,405 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API per le razze (Races)
+  // ----------------------------------------------------
+  
+  // GET tutte le razze
+  app.get("/api/races", async (req, res) => {
+    try {
+      const userRaces = await db.select().from(races)
+        .where(eq(races.userId, (req as any).userId))
+        .orderBy(asc(races.name));
+      
+      return res.status(200).json(userRaces);
+    } catch (error) {
+      console.error("Errore nel recuperare le razze:", error);
+      return res.status(500).json({ message: "Errore nel recuperare le razze" });
+    }
+  });
+  
+  // GET razza per ID
+  app.get("/api/races/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const race = await db.select().from(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!race.length) {
+        return res.status(404).json({ message: "Razza non trovata" });
+      }
+      
+      return res.status(200).json(race[0]);
+    } catch (error) {
+      console.error("Errore nel recuperare la razza:", error);
+      return res.status(500).json({ message: "Errore nel recuperare la razza" });
+    }
+  });
+  
+  // POST nuova razza
+  app.post("/api/races", async (req, res) => {
+    try {
+      const raceSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        lore: z.string().optional().nullable(),
+        traits: z.string().optional().nullable(),
+        society: z.string().optional().nullable(),
+        habitat: z.string().optional().nullable(),
+        imageData: z.string().optional().nullable()
+      });
+      
+      // Valida i dati
+      const validatedData = raceSchema.parse(req.body);
+      
+      // Crea una nuova razza
+      const [race] = await db.insert(races)
+        .values({
+          id: generateId('race'),
+          userId: (req as any).userId,
+          ...validatedData
+        })
+        .returning();
+      
+      // Incrementa il contatore delle razze nelle statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0) {
+            await db.update(userStats)
+              .set({
+                raceCount: stats[0].raceCount + 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+            
+            // Verifica e aggiorna gli achievement
+            await checkAndUpdateAchievements({
+              ...stats[0],
+              raceCount: stats[0].raceCount + 1
+            });
+          }
+        });
+      
+      return res.status(201).json({
+        message: "Razza creata con successo",
+        race
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della razza non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nella creazione della razza:", error);
+      return res.status(500).json({ message: "Errore nella creazione della razza" });
+    }
+  });
+  
+  // PUT aggiorna razza per ID
+  app.put("/api/races/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la razza esista e appartenga all'utente
+      const existingRace = await db.select().from(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!existingRace.length) {
+        return res.status(404).json({ message: "Razza non trovata" });
+      }
+      
+      const raceSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        lore: z.string().optional().nullable(),
+        traits: z.string().optional().nullable(),
+        society: z.string().optional().nullable(),
+        habitat: z.string().optional().nullable(),
+        imageData: z.string().optional().nullable()
+      });
+      
+      // Valida i dati
+      const validatedData = raceSchema.parse(req.body);
+      
+      // Aggiorna la razza
+      const [updatedRace] = await db.update(races)
+        .set({
+          ...validatedData,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .returning();
+      
+      return res.status(200).json({
+        message: "Razza aggiornata con successo",
+        race: updatedRace
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della razza non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nell'aggiornamento della razza:", error);
+      return res.status(500).json({ message: "Errore nell'aggiornamento della razza" });
+    }
+  });
+  
+  // DELETE razza per ID
+  app.delete("/api/races/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la razza esista e appartenga all'utente
+      const existingRace = await db.select().from(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!existingRace.length) {
+        return res.status(404).json({ message: "Razza non trovata" });
+      }
+      
+      // Elimina la razza
+      await db.delete(races)
+        .where(and(
+          eq(races.id, id),
+          eq(races.userId, (req as any).userId)
+        ));
+      
+      // Aggiorna il contatore delle razze nelle statistiche
+      await db.select().from(userStats)
+        .where(eq(userStats.userId, (req as any).userId))
+        .limit(1)
+        .then(async (stats) => {
+          if (stats.length > 0 && stats[0].raceCount > 0) {
+            await db.update(userStats)
+              .set({
+                raceCount: stats[0].raceCount - 1
+              })
+              .where(eq(userStats.userId, (req as any).userId));
+          }
+        });
+      
+      return res.status(200).json({
+        message: "Razza eliminata con successo"
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione della razza:", error);
+      return res.status(500).json({ message: "Errore nell'eliminazione della razza" });
+    }
+  });
+  
+  // API per le mappe (Maps)
+  // ----------------------------------------------------
+  
+  // GET tutte le mappe
+  app.get("/api/maps", async (req, res) => {
+    try {
+      const userMaps = await db.select().from(maps)
+        .where(eq(maps.userId, (req as any).userId))
+        .orderBy(asc(maps.name));
+      
+      return res.status(200).json(userMaps);
+    } catch (error) {
+      console.error("Errore nel recuperare le mappe:", error);
+      return res.status(500).json({ message: "Errore nel recuperare le mappe" });
+    }
+  });
+  
+  // GET mappa per ID
+  app.get("/api/maps/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const map = await db.select().from(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!map.length) {
+        return res.status(404).json({ message: "Mappa non trovata" });
+      }
+      
+      return res.status(200).json(map[0]);
+    } catch (error) {
+      console.error("Errore nel recuperare la mappa:", error);
+      return res.status(500).json({ message: "Errore nel recuperare la mappa" });
+    }
+  });
+  
+  // POST nuova mappa
+  app.post("/api/maps", async (req, res) => {
+    try {
+      const mapSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        description: z.string().optional().nullable(),
+        imageData: z.string().min(1, "L'immagine è obbligatoria"),
+        points: z.array(z.any()).optional().nullable()
+      });
+      
+      // Valida i dati
+      const validatedData = mapSchema.parse(req.body);
+      
+      // Converti l'array di punti in formato JSON
+      const points = validatedData.points 
+        ? JSON.stringify(validatedData.points) 
+        : '[]';
+      
+      // Crea una nuova mappa
+      const [map] = await db.insert(maps)
+        .values({
+          id: generateId('map'),
+          userId: (req as any).userId,
+          name: validatedData.name,
+          description: validatedData.description,
+          imageData: validatedData.imageData,
+          points
+        })
+        .returning();
+      
+      return res.status(201).json({
+        message: "Mappa creata con successo",
+        map
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della mappa non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nella creazione della mappa:", error);
+      return res.status(500).json({ message: "Errore nella creazione della mappa" });
+    }
+  });
+  
+  // PUT aggiorna mappa per ID
+  app.put("/api/maps/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la mappa esista e appartenga all'utente
+      const existingMap = await db.select().from(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!existingMap.length) {
+        return res.status(404).json({ message: "Mappa non trovata" });
+      }
+      
+      const mapSchema = z.object({
+        name: z.string().min(1, "Il nome è obbligatorio"),
+        description: z.string().optional().nullable(),
+        imageData: z.string().optional(),
+        points: z.array(z.any()).optional()
+      });
+      
+      // Valida i dati
+      const validatedData = mapSchema.parse(req.body);
+      
+      // Converti l'array di punti in formato JSON
+      const points = validatedData.points 
+        ? JSON.stringify(validatedData.points) 
+        : existingMap[0].points;
+      
+      // Prepara i dati per l'aggiornamento
+      const updateData: any = {
+        name: validatedData.name,
+        description: validatedData.description,
+        updatedAt: new Date()
+      };
+      
+      // Aggiungi imageData solo se presente
+      if (validatedData.imageData) {
+        updateData.imageData = validatedData.imageData;
+      }
+      
+      // Aggiungi points
+      updateData.points = points;
+      
+      // Aggiorna la mappa
+      const [updatedMap] = await db.update(maps)
+        .set(updateData)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .returning();
+      
+      return res.status(200).json({
+        message: "Mappa aggiornata con successo",
+        map: updatedMap
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dati della mappa non validi", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error("Errore nell'aggiornamento della mappa:", error);
+      return res.status(500).json({ message: "Errore nell'aggiornamento della mappa" });
+    }
+  });
+  
+  // DELETE mappa per ID
+  app.delete("/api/maps/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Controlla che la mappa esista e appartenga all'utente
+      const existingMap = await db.select().from(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ))
+        .limit(1);
+      
+      if (!existingMap.length) {
+        return res.status(404).json({ message: "Mappa non trovata" });
+      }
+      
+      // Elimina la mappa
+      await db.delete(maps)
+        .where(and(
+          eq(maps.id, id),
+          eq(maps.userId, (req as any).userId)
+        ));
+      
+      return res.status(200).json({
+        message: "Mappa eliminata con successo"
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione della mappa:", error);
+      return res.status(500).json({ message: "Errore nell'eliminazione della mappa" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
