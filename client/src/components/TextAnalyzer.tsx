@@ -72,7 +72,7 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
   // Estrae dialoghi dal testo
   const extractDialogues = () => {
     const dialogueRegex = /"([^"]+)"|"([^"]+)"|«([^»]+)»/g;
-    const matches = [...text.matchAll(dialogueRegex)];
+    const matches = Array.from(text.matchAll(dialogueRegex));
     return matches.map(match => match[1] || match[2] || match[3]);
   };
 
@@ -133,7 +133,7 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
                         <CardContent className="py-2">
                           {textAnalysis.strengths.length > 0 ? (
                             <ul className="space-y-1 text-sm">
-                              {textAnalysis.strengths.map((strength, i) => (
+                              {textAnalysis.strengths.map((strength: string, i: number) => (
                                 <li key={i} className="flex items-start">
                                   <span className="text-green-500 mr-1">•</span> {strength}
                                 </li>
@@ -155,7 +155,7 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
                         <CardContent className="py-2">
                           {textAnalysis.weaknesses.length > 0 ? (
                             <ul className="space-y-1 text-sm">
-                              {textAnalysis.weaknesses.map((weakness, i) => (
+                              {textAnalysis.weaknesses.map((weakness: string, i: number) => (
                                 <li key={i} className="flex items-start">
                                   <span className="text-red-500 mr-1">•</span> {weakness}
                                 </li>
@@ -177,7 +177,7 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
                         <CardContent className="py-2">
                           {textAnalysis.suggestions.length > 0 ? (
                             <ul className="space-y-1 text-sm">
-                              {textAnalysis.suggestions.map((suggestion, i) => (
+                              {textAnalysis.suggestions.map((suggestion: string, i: number) => (
                                 <li key={i} className="flex items-start">
                                   <span className="text-yellow-500 mr-1">•</span> {suggestion}
                                 </li>
@@ -275,7 +275,7 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
                         <CardContent className="py-2">
                           {styleAnalysis.suggestions.length > 0 ? (
                             <ul className="space-y-1 text-sm">
-                              {styleAnalysis.suggestions.map((suggestion, i) => (
+                              {styleAnalysis.suggestions.map((suggestion: string, i: number) => (
                                 <li key={i} className="flex items-start">
                                   <span className="text-yellow-500 mr-1">•</span> {suggestion}
                                 </li>
@@ -343,7 +343,7 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
                         <CardContent className="py-2">
                           {dialogueAnalysis.suggestions.length > 0 ? (
                             <ul className="space-y-1 text-sm">
-                              {dialogueAnalysis.suggestions.map((suggestion, i) => (
+                              {dialogueAnalysis.suggestions.map((suggestion: string, i: number) => (
                                 <li key={i} className="flex items-start">
                                   <span className="text-yellow-500 mr-1">•</span> {suggestion}
                                 </li>

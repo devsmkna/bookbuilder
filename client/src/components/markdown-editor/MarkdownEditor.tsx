@@ -72,6 +72,7 @@ const MarkdownEditor: React.FC = () => {
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const [showTextAnalyzer, setShowTextAnalyzer] = useState(false);
   const [, navigate] = useLocation();
   
   // Stato per il tooltip delle entità
@@ -421,12 +422,29 @@ const MarkdownEditor: React.FC = () => {
         onOpenExportImport={() => window.dispatchEvent(new Event('open-export-import'))}
       />
       
+      {/* Componente di analisi del testo */}
+      <TextAnalyzer 
+        text={content} 
+        isVisible={showTextAnalyzer} 
+        onToggle={() => setShowTextAnalyzer(!showTextAnalyzer)} 
+      />
+      
       <main className="flex-1 overflow-auto" ref={editorRef}>
         <div className="container mx-auto max-w-5xl py-6">
           <div className="editor-container bg-card rounded-lg shadow-sm border overflow-hidden text-lg">
             {/* Toolbar dell'editor */}
             <div className="editor-toolbar p-2 border-b flex items-center justify-between sticky top-0 z-10 bg-card">
               <div className="format-buttons flex flex-wrap gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTextAnalyzer(!showTextAnalyzer)}
+                  title="Analisi del testo"
+                  className={showTextAnalyzer ? "bg-primary/20" : ""}
+                >
+                  <Lightbulb className={`h-4 w-4 ${showTextAnalyzer ? "text-primary" : ""}`} />
+                </Button>
+                <Separator orientation="vertical" className="h-8 mx-1" />
                 <Button
                   variant="ghost"
                   size="sm"

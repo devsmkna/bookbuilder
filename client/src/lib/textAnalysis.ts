@@ -249,7 +249,7 @@ export function analyzeText(text: string): AnalysisResult {
 export function analyzeDialogues(text: string): DialogueAnalysisResult {
   // Estrai i dialoghi dal testo
   const dialogueRegex = /"([^"]+)"|"([^"]+)"|«([^»]+)»/g;
-  const matches = [...text.matchAll(dialogueRegex)];
+  const matches = Array.from(text.matchAll(dialogueRegex));
   const dialogues = matches.map(match => match[1] || match[2] || match[3]);
   
   if (dialogues.length === 0) {
