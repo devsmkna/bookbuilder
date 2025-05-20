@@ -426,7 +426,8 @@ const MarkdownEditor: React.FC = () => {
       <TextAnalyzer 
         text={content} 
         isVisible={showTextAnalyzer} 
-        onToggle={() => setShowTextAnalyzer(!showTextAnalyzer)} 
+        onToggle={() => setShowTextAnalyzer(!showTextAnalyzer)}
+        editorRef={editorRef}
       />
       
       <main className="flex-1 overflow-auto" ref={editorRef}>

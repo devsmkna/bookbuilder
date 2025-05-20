@@ -35,9 +35,10 @@ interface TextAnalyzerProps {
   text: string;
   isVisible: boolean;
   onToggle: () => void;
+  editorRef?: React.RefObject<HTMLElement>;
 }
 
-export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
+export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnalyzerProps) {
   const [textAnalysis, setTextAnalysis] = useState<AnalysisResult | null>(null);
   const [styleAnalysis, setStyleAnalysis] =
     useState<StyleAnalysisResult | null>(null);
