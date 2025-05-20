@@ -391,20 +391,43 @@ export function useDataMigration() {
       // Migra eventi
       const localEvents = localStorage.getItem('events');
       if (localEvents) {
-        const events = JSON.parse(localEvents);
-        for (const event of events) {
-          await createEvent.mutateAsync({
-            id: event.id,
-            name: event.name,
-            description: event.description,
-            date: event.date,
-            importance: event.importance || 0,
-            involvedCharacters: event.involvedCharacters || [],
-            locations: event.locations || []
-          });
+        try {
+          const events = JSON.parse(localEvents);
+          let importedCount = 0;
+          
+          for (const event of events) {
+            try {
+              // Verifica prima se l'evento esiste già nel database
+              const existingEvents = await fetchApi<Event[]>('GET', '/api/events');
+              const exists = existingEvents.some(e => e.id === event.id);
+              
+              if (!exists) {
+                await createEvent.mutateAsync({
+                  id: event.id,
+                  name: event.name,
+                  description: event.description,
+                  date: event.date,
+                  importance: event.importance || 0,
+                  involvedCharacters: event.involvedCharacters || [],
+                  locations: event.locations || []
+                });
+                importedCount++;
+              }
+            } catch (err) {
+              console.error('Errore durante la migrazione dell\'evento:', event.name, err);
+            }
+          }
+          
+          console.log('Eventi trovati:', events.length);
+          console.log('Eventi aggiunti:', importedCount);
+          
+          // Se tutti gli eventi sono stati importati, rimuovi dal localStorage
+          if (importedCount === events.length) {
+            localStorage.removeItem('events');
+          }
+        } catch (err) {
+          console.error('Errore nel parsing degli eventi dal localStorage:', err);
         }
-        console.log('Eventi trovati:', events.length);
-        console.log('Eventi aggiunti:', events.length);
       } else {
         console.log('Events localStorage:', 'Assente');
       }
