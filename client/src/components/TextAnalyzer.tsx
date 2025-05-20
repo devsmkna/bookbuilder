@@ -72,13 +72,14 @@ export function TextAnalyzer({ text, isVisible, onToggle }: TextAnalyzerProps) {
   // Estrae dialoghi dal testo
   const extractDialogues = () => {
     const dialogueRegex = /"([^"]+)"|"([^"]+)"|«([^»]+)»/g;
-    // Utilizzo un approccio diverso per compatibilità
-    const matches: Array<string[]> = [];
+    const dialogues: string[] = [];
     let match;
+    
     while ((match = dialogueRegex.exec(text)) !== null) {
-      matches.push(match);
+      dialogues.push(match[1] || match[2] || match[3]);
     }
-    return matches.map(match => match[1] || match[2] || match[3]);
+    
+    return dialogues;
   };
 
   if (!isVisible) return null;
