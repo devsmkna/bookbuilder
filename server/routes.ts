@@ -429,37 +429,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(1);
       
       let result;
+      const hasExistingAchievement = Array.isArray(userAchievementsResult) && userAchievementsResult.length > 0;
       
-      if (userAchievementsResult && Array.isArray(userAchievementsResult) && userAchievementsResult.length > 0) {
+      if (hasExistingAchievement) {
         const userAchievement = userAchievementsResult[0];
         
+        // Prepara i dati per l'aggiornamento
+        let updateData: any = {
+          unlocked: unlocked !== undefined ? unlocked : userAchievement.unlocked,
+          progress: progress !== undefined ? progress : userAchievement.progress
+        };
+        
+        // Gestisci la data di sblocco solo se necessario
+        if (unlocked && !userAchievement.unlocked) {
+          updateData = {
+            ...updateData,
+            unlockDate: new Date()
+          };
+        }
+        
         // Aggiorna l'achievement esistente
-        [result] = await db.update(userAchievements)
-          .set({
-            unlocked: unlocked !== undefined ? unlocked : userAchievement.unlocked,
-            progress: progress !== undefined ? progress : userAchievement.progress,
-            unlockDate: unlocked && !userAchievement.unlocked ? new Date() : userAchievement.unlockDate
-          })
+        const updateResult = await db.update(userAchievements)
+          .set(updateData)
           .where(and(
             eq(userAchievements.userId, (req as any).userId),
             eq(userAchievements.achievementId, id)
           ))
           .returning();
+          
+        result = updateResult[0];
       } else {
+        // Prepara i dati per il nuovo achievement
+        const newAchievementData = {
+          userId: (req as any).userId,
+          achievementId: id,
+          unlocked: unlocked || false,
+          progress: progress || 0,
+          unlockDate: unlocked ? new Date() : null
+        };
+        
         // Crea un nuovo record per l'achievement
-        [result] = await db.insert(userAchievements)
-          .values({
-            userId: (req as any).userId,
-            achievementId: id,
-            unlocked: unlocked || false,
-            progress: progress || 0,
-            unlockDate: unlocked ? new Date() : null
-          })
+        const insertResult = await db.insert(userAchievements)
+          .values([newAchievementData])
           .returning();
+        
+        result = insertResult[0];
       }
       
       // Se l'achievement è stato sbloccato, aggiorna l'esperienza dell'utente
-      if (unlocked && (!userAchievements.length || !userAchievements[0].unlocked)) {
+      if (unlocked && (!hasExistingAchievement || !userAchievementsResult[0].unlocked)) {
         const stats = await db.select().from(userStats)
           .where(eq(userStats.userId, (req as any).userId))
           .limit(1);
@@ -502,15 +520,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: (req as any).userId,
         wordCount: validatedData.wordCount || 0,
         duration: validatedData.duration || 0,
-        startTime: validatedData.startTime ? new Date(validatedData.startTime).toISOString() : new Date().toISOString(),
-        endTime: validatedData.endTime ? new Date(validatedData.endTime).toISOString() : null,
-        date: validatedData.date || new Date().toISOString().split('T')[0]
+        startTime: validatedData.startTime ? new Date(validatedData.startTime) : new Date(),
+        endTime: validatedData.endTime ? new Date(validatedData.endTime) : null,
+        date: validatedData.date ? validatedData.date : new Date().toISOString().split('T')[0]
       };
       
       // Crea una nuova sessione di scrittura
-      const [session] = await db.insert(writingSessions)
-        .values(sessionData)
+      const insertResult = await db.insert(writingSessions)
+        .values([sessionData])
         .returning();
+      
+      const session = insertResult[0];
       
       // Ottieni le statistiche attuali
       const stats = await db.select().from(userStats)
