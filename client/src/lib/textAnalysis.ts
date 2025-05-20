@@ -247,10 +247,14 @@ export function analyzeText(text: string): AnalysisResult {
  * Analizza specificamente i dialoghi nel testo
  */
 export function analyzeDialogues(text: string): DialogueAnalysisResult {
-  // Estrai i dialoghi dal testo
+  // Estrai i dialoghi dal testo usando un metodo compatibile
   const dialogueRegex = /"([^"]+)"|"([^"]+)"|«([^»]+)»/g;
-  const matches = Array.from(text.matchAll(dialogueRegex));
-  const dialogues = matches.map(match => match[1] || match[2] || match[3]);
+  const dialogues: string[] = [];
+  let match;
+  
+  while ((match = dialogueRegex.exec(text)) !== null) {
+    dialogues.push(match[1] || match[2] || match[3]);
+  }
   
   if (dialogues.length === 0) {
     return {
@@ -313,25 +317,9 @@ export function analyzeDialogues(text: string): DialogueAnalysisResult {
     suggestions.push("Usa tag di dialogo più variati invece di ripetere sempre 'disse' o 'rispose'.");
   }
   
-  // Verifica se ci sono dialoghi che si alternano senza descrizioni
-  let consecutiveDialogues = 0;
-  let maxConsecutiveDialogues = 0;
-  
-  for (let i = 1; i < matches.length; i++) {
-    const prevEnd = matches[i-1].index! + matches[i-1][0].length;
-    const currStart = matches[i].index!;
-    const textBetween = text.substring(prevEnd, currStart);
-    
-    if (textBetween.trim().length < 10) {
-      consecutiveDialogues++;
-    } else {
-      consecutiveDialogues = 0;
-    }
-    
-    maxConsecutiveDialogues = Math.max(maxConsecutiveDialogues, consecutiveDialogues);
-  }
-  
-  if (maxConsecutiveDialogues > 4) {
+  // Stima se ci sono molti dialoghi consecutivi
+  // Se più della metà dei dialoghi sono brevi, probabilmente ci sono scambi rapidi
+  if (dialogues.length > 4 && shortDialogues > dialogues.length / 2) {
     score -= 5;
     suggestions.push("Ci sono molti dialoghi consecutivi senza descrizioni o contesto. Aggiungi dettagli sulle reazioni fisiche, l'ambiente o i pensieri dei personaggi.");
   }
