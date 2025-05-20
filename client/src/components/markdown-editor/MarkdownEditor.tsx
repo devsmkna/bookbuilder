@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import { TextAnalyzer } from "@/components/TextAnalyzer";
 import { useGamificationContext } from "@/context/GamificationContext";
 import { 
   Bold, 
@@ -24,7 +25,8 @@ import {
   ListOrdered,
   Underline,
   Strikethrough,
-  Quote
+  Quote,
+  Lightbulb
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import "./editor-styles.css";
