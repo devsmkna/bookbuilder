@@ -497,16 +497,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Valida i dati della sessione
       const validatedData = sessionSchema.parse(req.body);
       
+      // Prepara i dati per la nuova sessione di scrittura
+      const sessionData = {
+        userId: (req as any).userId,
+        wordCount: validatedData.wordCount || 0,
+        duration: validatedData.duration || 0,
+        startTime: validatedData.startTime ? new Date(validatedData.startTime).toISOString() : new Date().toISOString(),
+        endTime: validatedData.endTime ? new Date(validatedData.endTime).toISOString() : null,
+        date: validatedData.date || new Date().toISOString().split('T')[0]
+      };
+      
       // Crea una nuova sessione di scrittura
       const [session] = await db.insert(writingSessions)
-        .values({
-          userId: (req as any).userId,
-          wordCount: validatedData.wordCount,
-          duration: validatedData.duration,
-          startTime: validatedData.startTime ? new Date(validatedData.startTime) : new Date(),
-          endTime: validatedData.endTime ? new Date(validatedData.endTime) : null,
-          date: validatedData.date ? new Date(validatedData.date) : new Date()
-        })
+        .values(sessionData)
         .returning();
       
       // Ottieni le statistiche attuali
@@ -540,25 +543,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API per ottenere le sessioni di scrittura dell'utente
-  app.get("/api/writing-sessions", async (req, res) => {
+  app.get("/api/writing-sessions", ensureUser, async (req, res) => {
     try {
       // Parametri di filtro per data
       const { startDate, endDate } = req.query;
       
-      let sessionsQuery = db.select().from(writingSessions)
-        .where(eq(writingSessions.userId, (req as any).userId))
-        .orderBy(desc(writingSessions.date));
+      // Costruisci le condizioni base
+      let conditions = [eq(writingSessions.userId, (req as any).userId)];
       
-      // Applica filtri opzionali
+      // Aggiungi condizioni per le date se presenti
       if (startDate) {
-        sessionsQuery = sessionsQuery.where(gte(writingSessions.date, new Date(startDate as string)));
+        const formattedStartDate = new Date(startDate as string).toISOString().split('T')[0];
+        conditions.push(gte(writingSessions.date, formattedStartDate));
       }
       
       if (endDate) {
-        sessionsQuery = sessionsQuery.where(lte(writingSessions.date, new Date(endDate as string)));
+        const formattedEndDate = new Date(endDate as string).toISOString().split('T')[0];
+        conditions.push(lte(writingSessions.date, formattedEndDate));
       }
       
-      const sessions = await sessionsQuery;
+      // Esegui la query con tutte le condizioni
+      const sessions = await db.select()
+        .from(writingSessions)
+        .where(and(...conditions))
+        .orderBy(desc(writingSessions.date));
       
       return res.status(200).json(sessions);
     } catch (error) {
