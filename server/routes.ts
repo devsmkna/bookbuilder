@@ -2000,10 +2000,9 @@ async function checkAndUpdateAchievements(userStats: any) {
           
           // Se l'achievement è stato appena sbloccato, aggiorna l'esperienza
           if (unlocked && !userAchievement.unlocked) {
+            const currentXP = userStats.experience || 0;
             await db.update(userStats)
-              .set({
-                experience: userStats.experience + achievement.xp
-              })
+              .set({ experience: currentXP + achievement.xp })
               .where(eq(userStats.id, userStats.id));
           }
         }
@@ -2020,10 +2019,9 @@ async function checkAndUpdateAchievements(userStats: any) {
         
         // Se l'achievement è stato sbloccato, aggiorna l'esperienza
         if (unlocked) {
+          const currentXP = userStats.experience || 0;
           await db.update(userStats)
-            .set({
-              experience: (userStats.experience || 0) + achievement.xp
-            })
+            .set({ experience: currentXP + achievement.xp })
             .where(eq(userStats.id, userStats.id));
         }
       }
