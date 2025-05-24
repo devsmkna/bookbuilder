@@ -426,31 +426,48 @@ export function analyzeStyle(text: string): StyleAnalysisResult {
 /**
  * Trova sinonimi per una parola data
  */
-export function findSynonyms(word: string): string[] {
+export async function findSynonyms(word: string): Promise<string[]> {
   const cleanWord = word.toLowerCase().trim();
   
-  // Cerca nel database locale espanso
-  if (synonymsDatabase[cleanWord]) {
-    return synonymsDatabase[cleanWord];
-  }
-  
-  // Prova a trovare sinonimi per forme simili (radici comuni)
-  for (const key of Object.keys(synonymsDatabase)) {
-    if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
-      return synonymsDatabase[key];
-    }
-  }
-  
-  // Cerca per parole parziali (es. "bello" da "bellissimo")
-  for (const key of Object.keys(synonymsDatabase)) {
-    if (cleanWord.includes(key) || key.includes(cleanWord)) {
-      if (Math.abs(cleanWord.length - key.length) <= 3) {
-        return synonymsDatabase[key];
+  try {
+    // Prova prima con l'API Free Dictionary (gratuita, senza chiavi)
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const synonyms: string[] = [];
+      
+      // Estrai sinonimi dalle definizioni
+      data.forEach((entry: any) => {
+        entry.meanings?.forEach((meaning: any) => {
+          meaning.synonyms?.forEach((synonym: string) => {
+            if (!synonyms.includes(synonym) && synonyms.length < 8) {
+              synonyms.push(synonym);
+            }
+          });
+        });
+      });
+      
+      if (synonyms.length > 0) {
+        return synonyms;
       }
     }
+    
+    // Fallback: prova con Datamuse API per inglese
+    const datamuse = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=8`);
+    const dataMuse = await datamuse.json();
+    
+    if (dataMuse && dataMuse.length > 0) {
+      return dataMuse.map((item: any) => item.word);
+    }
+    
+    // Se nessuna API funziona, restituisci array vuoto
+    return [];
+    
+  } catch (error) {
+    console.warn('Errore nel recupero dei sinonimi dalle API:', error);
+    return [];
   }
-  
-  return [];
 }
 
 /**

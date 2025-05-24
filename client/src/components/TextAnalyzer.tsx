@@ -48,14 +48,25 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
   const [selectedDialogue, setSelectedDialogue] = useState<string | null>(null);
   const [dialogueSuggestions, setDialogueSuggestions] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoadingSynonyms, setIsLoadingSynonyms] = useState(false);
 
-  const handleWordClick = useCallback((word: string) => {
+  const handleWordClick = useCallback(async (word: string) => {
     if (word.length < 3) return;
     
     setSelectedWord(word);
-    const foundSynonyms = findSynonyms(word);
-    setSynonyms(foundSynonyms);
+    setSynonyms([]);
+    setIsLoadingSynonyms(true);
     setActiveTab("general");
+    
+    try {
+      const foundSynonyms = await findSynonyms(word);
+      setSynonyms(foundSynonyms);
+    } catch (error) {
+      console.warn('Errore nel caricamento dei sinonimi:', error);
+      setSynonyms([]);
+    } finally {
+      setIsLoadingSynonyms(false);
+    }
   }, []);
 
   const handleDialogueSelect = useCallback((dialogue: string) => {
@@ -254,14 +265,19 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
                           {selectedWord ? (
                             <div className="mt-2">
                               <p className="text-sm mb-1 font-medium">Sinonimi per "{selectedWord}":</p>
-                              {synonyms.length > 0 ? (
+                              {isLoadingSynonyms ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                                  <p className="text-sm text-muted-foreground">Caricamento sinonimi...</p>
+                                </div>
+                              ) : synonyms.length > 0 ? (
                                 <div className="flex flex-wrap gap-1 mt-1">
                                   {synonyms.map((synonym, i) => (
                                     <Badge key={i} variant="outline" className="cursor-pointer hover:bg-secondary">{synonym}</Badge>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-sm text-muted-foreground">Nessun sinonimo trovato.</p>
+                                <p className="text-sm text-muted-foreground">Nessun sinonimo trovato per questa parola.</p>
                               )}
                             </div>
                           ) : (
