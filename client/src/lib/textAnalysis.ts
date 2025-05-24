@@ -426,40 +426,88 @@ export function analyzeStyle(text: string): StyleAnalysisResult {
 /**
  * Trova sinonimi per una parola data
  */
+// Funzione helper per rilevare se una parola è italiana
+function isItalianWord(word: string): boolean {
+  // Lista di caratteri tipici italiani e terminazioni comuni
+  const italianEndings = ['are', 'ere', 'ire', 'ato', 'uto', 'ita', 'etto', 'ezza', 'ione', 'ante', 'ente'];
+  const italianChars = /[àèéìíîòóù]/;
+  
+  return italianChars.test(word) || italianEndings.some(ending => word.endsWith(ending));
+}
+
 export async function findSynonyms(word: string): Promise<string[]> {
   const cleanWord = word.toLowerCase().trim();
+  const isItalian = isItalianWord(cleanWord);
   
   try {
-    // 1. Prova prima con Free Dictionary API per inglese
-    try {
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        const synonyms: string[] = [];
-        
-        data.forEach((entry: any) => {
-          entry.meanings?.forEach((meaning: any) => {
-            meaning.synonyms?.forEach((synonym: string) => {
-              if (!synonyms.includes(synonym) && synonyms.length < 8) {
-                synonyms.push(synonym);
-              }
+    // 1. PRIORITÀ: API per italiano se la parola sembra italiana
+    if (isItalian) {
+      // Prova con OpenThesaurus per italiano
+      try {
+        const openThesaurus = await fetch(`https://www.openthesaurus.de/synonyme/search?q=${encodeURIComponent(cleanWord)}&format=application/json`);
+        if (openThesaurus.ok) {
+          const data = await openThesaurus.json();
+          if (data.synsets && data.synsets.length > 0) {
+            const synonyms: string[] = [];
+            data.synsets.forEach((synset: any) => {
+              synset.terms?.forEach((term: any) => {
+                if (term.term && term.term !== cleanWord && synonyms.length < 8) {
+                  synonyms.push(term.term);
+                }
+              });
             });
-          });
-        });
-        
-        if (synonyms.length > 0) {
-          return synonyms;
+            if (synonyms.length > 0) {
+              return synonyms;
+            }
+          }
         }
+      } catch (e) {
+        console.warn('OpenThesaurus API non disponibile:', e);
       }
-    } catch (e) {
-      console.warn('Free Dictionary API non disponibile:', e);
+
+      // Prova con Wiktionary italiano
+      try {
+        const wiktItalian = await fetch(`https://it.wiktionary.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(cleanWord)}&prop=wikitext&origin=*`);
+        if (wiktItalian.ok) {
+          const data = await wiktItalian.json();
+          if (data.parse && data.parse.wikitext) {
+            const wikitext = data.parse.wikitext['*'];
+            const synonyms: string[] = [];
+            
+            // Cerca sinonimi nel formato Wiktionary
+            const synMatches = wikitext.match(/\{\{sinonimi\}\}([^{]*)/gi) || 
+                             wikitext.match(/sinonimi?[:\s]*([^.\n]*)/gi);
+            
+            if (synMatches) {
+              synMatches.forEach((match: string) => {
+                const words = match.replace(/\{\{sinonimi\}\}|sinonimi?[:\s]*/gi, '')
+                  .split(/[,;|]/)
+                  .map((w: string) => w.trim().replace(/\[\[|\]\]/g, ''))
+                  .filter((w: string) => w && w !== cleanWord);
+                
+                words.forEach((w: string) => {
+                  if (synonyms.length < 6 && !synonyms.includes(w)) {
+                    synonyms.push(w);
+                  }
+                });
+              });
+            }
+            
+            if (synonyms.length > 0) {
+              return synonyms;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Wiktionary italiano non disponibile:', e);
+      }
     }
-    
-    // 2. Prova con Datamuse API per inglese
+
+    // 2. API multilingue con supporto esteso
     try {
-      const datamuse = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=8`);
-      const datamuseData = await datamuse.json();
+      // Prova con Datamuse per parole italiane (supporta italiano limitato)
+      const datamuseIt = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=8`);
+      const datamuseData = await datamuseIt.json();
       
       if (datamuseData && datamuseData.length > 0) {
         return datamuseData.map((item: any) => item.word);
@@ -467,29 +515,55 @@ export async function findSynonyms(word: string): Promise<string[]> {
     } catch (e) {
       console.warn('Datamuse API non disponibile:', e);
     }
+
+    // 3. Per parole inglesi o come fallback
+    if (!isItalian) {
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const synonyms: string[] = [];
+          
+          data.forEach((entry: any) => {
+            entry.meanings?.forEach((meaning: any) => {
+              meaning.synonyms?.forEach((synonym: string) => {
+                if (!synonyms.includes(synonym) && synonyms.length < 8) {
+                  synonyms.push(synonym);
+                }
+              });
+            });
+          });
+          
+          if (synonyms.length > 0) {
+            return synonyms;
+          }
+        }
+      } catch (e) {
+        console.warn('Free Dictionary API non disponibile:', e);
+      }
+    }
     
-    // 3. Prova con API alternative per italiano/multilingue
+    // 4. Prova con Wiktionary generale
     try {
-      // Prova con Wiktionary API per italiano
       const wiktionary = await fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(cleanWord)}`);
       
       if (wiktionary.ok) {
         const wiktData = await wiktionary.json();
         const synonyms: string[] = [];
         
-        // Cerca sinonimi nelle definizioni di Wiktionary
         Object.values(wiktData).forEach((langData: any) => {
           if (Array.isArray(langData)) {
             langData.forEach((definition: any) => {
               if (definition.definition) {
                 const text = definition.definition.toLowerCase();
-                // Cerca pattern comuni per sinonimi
-                const synonymMatches = text.match(/synonym[s]?[:\s]+([^.;,]+)/gi);
+                const synonymMatches = text.match(/synonym[s]?[:\s]+([^.;,]+)/gi) ||
+                                     text.match(/sinonim[io][:\s]+([^.;,]+)/gi);
                 if (synonymMatches) {
                   synonymMatches.forEach((match: string) => {
-                    const words = match.replace(/synonym[s]?[:\s]+/gi, '').split(/[,;]/);
+                    const words = match.replace(/synonym[s]?[:\s]+|sinonim[io][:\s]+/gi, '').split(/[,;]/);
                     words.forEach((w: string) => {
-                      const cleanSyn = w.trim().replace(/[^\w\s]/g, '');
+                      const cleanSyn = w.trim().replace(/[^\w\sàèéìíîòóù]/g, '');
                       if (cleanSyn && !synonyms.includes(cleanSyn) && synonyms.length < 6) {
                         synonyms.push(cleanSyn);
                       }
@@ -508,24 +582,46 @@ export async function findSynonyms(word: string): Promise<string[]> {
     } catch (e) {
       console.warn('Wiktionary API non disponibile:', e);
     }
-    
-    // 4. Prova con WordsAPI tramite RapidAPI (gratuita con limiti)
+
+    // 5. Ultimo tentativo con MyMemory Translation per sinonimi di contesto
     try {
-      const wordsApi = await fetch(`https://wordsapiv1.p.rapidapi.com/words/${encodeURIComponent(cleanWord)}/synonyms`, {
-        headers: {
-          'X-RapidAPI-Key': 'your-rapidapi-key-here', // Sostituire con chiave reale se disponibile
-          'X-RapidAPI-Host': 'wordsapiv1.p.rapidapi.com'
-        }
-      });
-      
-      if (wordsApi.ok) {
-        const wordsData = await wordsApi.json();
-        if (wordsData.synonyms && Array.isArray(wordsData.synonyms)) {
-          return wordsData.synonyms.slice(0, 8);
+      const myMemory = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanWord)}&langpair=it|en`);
+      if (myMemory.ok) {
+        const data = await myMemory.json();
+        if (data.responseData && data.responseData.translatedText) {
+          // Usa la traduzione per cercare sinonimi in inglese e poi ritraduci
+          const translation = data.responseData.translatedText.toLowerCase();
+          if (translation !== cleanWord) {
+            const englishSyns = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(translation)}&max=5`);
+            const englishData = await englishSyns.json();
+            
+            if (englishData && englishData.length > 0) {
+              // Traduci i sinonimi inglesi in italiano
+              const synonyms: string[] = [];
+              for (const syn of englishData.slice(0, 3)) {
+                try {
+                  const backTranslate = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(syn.word)}&langpair=en|it`);
+                  const backData = await backTranslate.json();
+                  if (backData.responseData && backData.responseData.translatedText) {
+                    const italianSyn = backData.responseData.translatedText.toLowerCase();
+                    if (italianSyn !== cleanWord && !synonyms.includes(italianSyn)) {
+                      synonyms.push(italianSyn);
+                    }
+                  }
+                } catch (e) {
+                  // Ignora errori per singole traduzioni
+                }
+              }
+              
+              if (synonyms.length > 0) {
+                return synonyms;
+              }
+            }
+          }
         }
       }
     } catch (e) {
-      // Ignorare errori per WordsAPI se non configurata
+      console.warn('MyMemory API non disponibile:', e);
     }
     
     // Se nessuna API funziona, restituisci array vuoto
