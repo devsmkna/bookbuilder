@@ -1907,14 +1907,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 // Funzione per verificare e aggiornare gli achievement in base alle statistiche
-async function checkAndUpdateAchievements(userStats: any) {
+async function checkAndUpdateAchievements(userStatsData: any) {
   try {
     // Recupera tutti gli achievement
     const allAchievements = await db.select().from(achievementDefinitions);
     
     // Recupera gli achievement già sbloccati dall'utente
     const userAchievementsList = await db.select().from(userAchievements)
-      .where(eq(userAchievements.userId, userStats.userId));
+      .where(eq(userAchievements.userId, userStatsData.userId));
     
     // Mappa degli achievement già tracciati dall'utente
     const userAchievementsMap: Record<string, any> = {};
@@ -1938,43 +1938,43 @@ async function checkAndUpdateAchievements(userStats: any) {
       switch(achievement.statType) {
         case 'wordCount':
         case 'wordCountTotal':
-          statValue = userStats.wordCount;
+          statValue = userStatsData.wordCount;
           break;
         case 'wordCountToday':
-          statValue = userStats.wordCountToday;
+          statValue = userStatsData.wordCountToday;
           break;
         case 'wordCountWeek':
-          statValue = userStats.wordCountWeek;
+          statValue = userStatsData.wordCountWeek;
           break;
         case 'characterCount':
-          statValue = userStats.characterCount;
+          statValue = userStatsData.characterCount;
           break;
         case 'placeCount':
-          statValue = userStats.placeCount;
+          statValue = userStatsData.placeCount;
           break;
         case 'eventCount':
-          statValue = userStats.eventCount;
+          statValue = userStatsData.eventCount;
           break;
         case 'raceCount':
-          statValue = userStats.raceCount;
+          statValue = userStatsData.raceCount;
           break;
         case 'sessionsCompleted':
-          statValue = userStats.sessionsCompleted;
+          statValue = userStatsData.sessionsCompleted;
           break;
         case 'wordsPerDay':
-          statValue = userStats.wordsPerDay;
+          statValue = userStatsData.wordsPerDay;
           break;
         case 'dailyGoalStreak':
-          statValue = userStats.dailyGoalStreak;
+          statValue = userStatsData.dailyGoalStreak;
           break;
         case 'writeStreak':
-          statValue = userStats.writeStreak;
+          statValue = userStatsData.writeStreak;
           break;
         case 'writeTime':
-          statValue = userStats.writeTime;
+          statValue = userStatsData.writeTime;
           break;
         case 'writingSpeed':
-          statValue = userStats.writingSpeed;
+          statValue = userStatsData.writingSpeed;
           break;
       }
       
