@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { applyMarkdownFormat, countWordsAndChars, processWikiLinks } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useRealtimeGamification } from "@/hooks/use-realtime-gamification";
 
 // Entity types that can be linked in the editor
 export interface LinkedEntity {
@@ -39,6 +40,10 @@ export function useEditor() {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   
   const editorRef = useRef<HTMLDivElement>(null);
+  const previousWordCountRef = useRef(0);
+  
+  // Hook per la gamificazione in tempo reale
+  const { addWordsToSession } = useRealtimeGamification();
 
   // Set initial theme based on system preference
   useEffect(() => {
@@ -57,6 +62,15 @@ export function useEditor() {
     setWordCount(words);
     setCharCount(chars);
     
+    // Tracking gamificazione: conta le nuove parole scritte
+    const previousWords = previousWordCountRef.current;
+    if (words > previousWords) {
+      const newWordsWritten = words - previousWords;
+      addWordsToSession(newWordsWritten);
+      console.log(`📝 Scritte ${newWordsWritten} nuove parole - Totale: ${words}`);
+    }
+    previousWordCountRef.current = words;
+    
     // Auto-save content whenever it changes
     if (content) {
       localStorage.setItem('editor-content', content);
@@ -69,7 +83,7 @@ export function useEditor() {
     } else {
       setRenderedContent("");
     }
-  }, [content, linkedEntities]);
+  }, [content, linkedEntities, addWordsToSession]);
   
   // Load linked entities (characters and places)
   useEffect(() => {
