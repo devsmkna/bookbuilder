@@ -426,49 +426,31 @@ export function analyzeStyle(text: string): StyleAnalysisResult {
 /**
  * Trova sinonimi per una parola data
  */
-export async function findSynonyms(word: string): Promise<string[]> {
+export function findSynonyms(word: string): string[] {
   const cleanWord = word.toLowerCase().trim();
   
-  // Prima controlla il database locale per una risposta immediata
+  // Cerca nel database locale espanso
   if (synonymsDatabase[cleanWord]) {
     return synonymsDatabase[cleanWord];
   }
   
-  try {
-    // Usa Datamuse API per trovare sinonimi
-    const response = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=8`);
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
-      // Estrai le parole dai risultati
-      const synonyms = data.map((item: any) => item.word);
-      return synonyms;
+  // Prova a trovare sinonimi per forme simili (radici comuni)
+  for (const key of Object.keys(synonymsDatabase)) {
+    if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
+      return synonymsDatabase[key];
     }
-    
-    // Se l'API non trova nulla, prova il database locale con ricerca simile
-    for (const key of Object.keys(synonymsDatabase)) {
-      if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
-        return synonymsDatabase[key];
-      }
-    }
-    
-    return [];
-  } catch (error) {
-    console.warn('Errore nel recupero dei sinonimi dall\'API:', error);
-    
-    // Fallback al database locale in caso di errore
-    if (synonymsDatabase[cleanWord]) {
-      return synonymsDatabase[cleanWord];
-    }
-    
-    for (const key of Object.keys(synonymsDatabase)) {
-      if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
-        return synonymsDatabase[key];
-      }
-    }
-    
-    return [];
   }
+  
+  // Cerca per parole parziali (es. "bello" da "bellissimo")
+  for (const key of Object.keys(synonymsDatabase)) {
+    if (cleanWord.includes(key) || key.includes(cleanWord)) {
+      if (Math.abs(cleanWord.length - key.length) <= 3) {
+        return synonymsDatabase[key];
+      }
+    }
+  }
+  
+  return [];
 }
 
 /**
