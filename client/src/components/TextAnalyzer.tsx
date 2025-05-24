@@ -165,7 +165,7 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
             </div>
           ) : (
             <>
-              <TabsContent value="general" className="flex-1 overflow-hidden flex flex-col p-4 pt-0">
+              <TabsContent value="general" className="flex-auto overflow-hidden flex-col p-4 pt-0">
                 {textAnalysis && (
                   <>
                     <div className="flex items-center gap-2 mt-4 mb-2">
@@ -274,7 +274,7 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
                 )}
               </TabsContent>
               
-              <TabsContent value="style" className="flex-1 overflow-hidden flex flex-col p-4 pt-0">
+              <TabsContent value="style" className="flex-auto overflow-hidden flex-col p-4 pt-0">
                 {styleAnalysis && (
                   <>
                     <div className="flex items-center gap-2 mt-4 mb-2">
@@ -360,7 +360,7 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
                 )}
               </TabsContent>
               
-              <TabsContent value="dialogue" className="flex-1 overflow-hidden flex flex-col p-4 pt-0">
+              <TabsContent value="dialogue" className="flex-auto overflow-hidden flex-col p-4 pt-0">
                 {dialogueAnalysis && (
                   <>
                     <div className="flex items-center gap-2 mt-4 mb-2">
