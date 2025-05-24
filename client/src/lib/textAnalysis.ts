@@ -233,11 +233,11 @@ export function analyzeText(text: string): AnalysisResult {
   if (repeatedWords.length > 0) {
     weaknesses.push(`Parole ripetute con frequenza: ${repeatedWords.slice(0, 3).join(', ')}${repeatedWords.length > 3 ? '...' : ''}`);
     
-    // Suggerisci sinonimi per le parole ripetute
+    // Suggerisci sinonimi per le parole ripetute (usando il database locale per velocità)
     repeatedWords.slice(0, 3).forEach(word => {
-      const synonyms = findSynonyms(word);
-      if (synonyms.length > 0) {
-        suggestions.push(`Sostituisci "${word}" con: ${synonyms.join(', ')}`);
+      if (synonymsDatabase[word.toLowerCase()]) {
+        const synonyms = synonymsDatabase[word.toLowerCase()];
+        suggestions.push(`Sostituisci "${word}" con: ${synonyms.slice(0, 3).join(', ')}`);
       }
     });
   }
