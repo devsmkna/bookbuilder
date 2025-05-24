@@ -405,6 +405,12 @@ const MarkdownEditor: React.FC = () => {
       textarea.style.height = `${newHeight}px`;
     }
   }, [content, textareaRef]);
+
+  // Salva il contenuto HTML renderizzato nel localStorage per l'esportazione
+  useEffect(() => {
+    const renderedHtml = renderMarkdown(content);
+    localStorage.setItem('editor-rendered-content', renderedHtml);
+  }, [content, renderMarkdown]);
   
   return (
     <div className={cn(

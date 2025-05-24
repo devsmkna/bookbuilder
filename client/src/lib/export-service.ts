@@ -24,8 +24,9 @@ export interface ExportMetadata {
 /**
  * Esporta il contenuto in formato HTML
  */
-export function exportToHTML(content: string, metadata: ExportMetadata, options: ExportOptions): string {
-  const htmlContent = marked(content);
+export function exportToHTML(content: string, metadata: ExportMetadata, options: ExportOptions, isAlreadyRendered: boolean = false): string {
+  // Se il contenuto è già HTML renderizzato, lo usiamo direttamente, altrimenti lo convertiamo da Markdown
+  const htmlContent = isAlreadyRendered ? content : marked(content);
   
   const htmlTemplate = `
 <!DOCTYPE html>

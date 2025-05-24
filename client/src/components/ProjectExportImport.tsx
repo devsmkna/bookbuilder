@@ -38,6 +38,11 @@ export default function ProjectExportImport({ isOpen, onClose }: ProjectExportIm
     return localStorage.getItem('editor-content') || '';
   };
 
+  // Recupera il contenuto HTML renderizzato dall'anteprima
+  const getRenderedContent = (): string => {
+    return localStorage.getItem('editor-rendered-content') || '';
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     
@@ -74,14 +79,18 @@ export default function ProjectExportImport({ isOpen, onClose }: ProjectExportIm
         format: exportFormat
       };
 
+      // Usa il contenuto renderizzato se disponibile, altrimenti usa il Markdown
+      const renderedContent = getRenderedContent();
+      const contentToExport = renderedContent || content;
+
       switch (exportFormat) {
         case 'html':
-          const htmlContent = exportToHTML(content, metadata, options);
+          const htmlContent = exportToHTML(contentToExport, metadata, options, !!renderedContent);
           downloadHTML(htmlContent, filename);
           break;
           
         case 'pdf':
-          const pdfHtmlContent = exportToHTML(content, metadata, options);
+          const pdfHtmlContent = exportToHTML(contentToExport, metadata, options, !!renderedContent);
           exportToPDF(pdfHtmlContent, filename);
           break;
           
