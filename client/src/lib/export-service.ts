@@ -76,29 +76,56 @@ export function exportToHTML(content: string, metadata: ExportMetadata, options:
         }
         
         .content {
+            font-family: 'Georgia', 'Times New Roman', serif;
             font-size: 1.1rem;
             text-align: justify;
+            line-height: 1.4;
+            overflow-y: auto;
+            -webkit-hyphens: auto;
+            -moz-hyphens: auto;
+            -ms-hyphens: auto;
+            hyphens: auto;
+            word-break: normal;
+            overflow-wrap: normal;
         }
         
+        /* Stili identici all'anteprima dell'editor */
         .content h1 {
+            font-size: 1.5rem;
+            margin: 8rem 0 10rem;
+            text-align: center;
             color: #2c3e50;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.5rem;
+        }
+        
+        .content h1:first-child {
+            margin-top: 0;
         }
         
         .content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.75rem;
+            padding-bottom: 0.2rem;
             color: #34495e;
-            margin-top: 2rem;
+        }
+        
+        .content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1rem 0 0.75rem;
+            color: #34495e;
         }
         
         .content p {
-            margin-bottom: 1.2rem;
+            margin: 0;
+            text-indent: 2rem;
         }
         
         .content blockquote {
             border-left: 4px solid #007AFF;
-            margin: 1.5rem 0;
             padding-left: 1rem;
+            margin: 1rem 0;
+            color: #6c757d;
             font-style: italic;
             background-color: #f8f9fa;
             padding: 1rem;
@@ -106,11 +133,11 @@ export function exportToHTML(content: string, metadata: ExportMetadata, options:
         }
         
         .content code {
+            font-family: "Menlo", "Monaco", "Consolas", monospace;
             background-color: #f1f3f4;
             padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
         }
         
         .content pre {
@@ -119,6 +146,44 @@ export function exportToHTML(content: string, metadata: ExportMetadata, options:
             border-radius: 8px;
             padding: 1rem;
             overflow-x: auto;
+        }
+        
+        /* Stili per le liste */
+        .content ul, .content ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        .content li {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Stili per i link delle entità */
+        .content .entity-link {
+            color: #007AFF;
+            text-decoration: none;
+            border-bottom: 1px dotted #007AFF;
+        }
+        
+        .content .entity-link:hover {
+            background-color: #f0f8ff;
+        }
+        
+        /* Stili per enfasi */
+        .content strong {
+            font-weight: bold;
+        }
+        
+        .content em {
+            font-style: italic;
+        }
+        
+        .content u {
+            text-decoration: underline;
+        }
+        
+        .content del {
+            text-decoration: line-through;
         }
         
         .footer {
