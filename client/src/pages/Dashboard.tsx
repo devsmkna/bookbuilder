@@ -10,7 +10,7 @@ import Sidebar from "@/components/Sidebar";
 import UserProfile from "@/components/gamification/UserProfile";
 import Achievements from "@/components/gamification/Achievements";
 import { useEditor } from "@/hooks/use-editor";
-import { useGamification } from "@/hooks/use-gamification";
+import { useRealtimeGamification } from "@/hooks/use-realtime-gamification";
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function Dashboard() {
   
   const [, navigate] = useLocation();
   const { restoreTemporaryContent } = useEditor();
-  const { level, stats } = useGamification();
+  const { level, stats, totalWordsWritten, sessionWordsWritten, experience, experienceToNextLevel, percentToNextLevel, achievements } = useRealtimeGamification();
 
   // Get theme preference from localStorage
   React.useEffect(() => {

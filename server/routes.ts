@@ -2022,7 +2022,7 @@ async function checkAndUpdateAchievements(userStats: any) {
         if (unlocked) {
           await db.update(userStats)
             .set({
-              experience: userStats.experience + achievement.xp
+              experience: (userStats.experience || 0) + achievement.xp
             })
             .where(eq(userStats.id, userStats.id));
         }
