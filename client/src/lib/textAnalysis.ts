@@ -426,24 +426,49 @@ export function analyzeStyle(text: string): StyleAnalysisResult {
 /**
  * Trova sinonimi per una parola data
  */
-export function findSynonyms(word: string): string[] {
-  // Pulisci la parola
+export async function findSynonyms(word: string): Promise<string[]> {
   const cleanWord = word.toLowerCase().trim();
   
-  // Cerca nella nostra base di sinonimi
+  // Prima controlla il database locale per una risposta immediata
   if (synonymsDatabase[cleanWord]) {
     return synonymsDatabase[cleanWord];
   }
   
-  // Prova a trovare sinonimi per forme simili
-  for (const key of Object.keys(synonymsDatabase)) {
-    // Verifica se la parola inizia con la stessa radice
-    if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
-      return synonymsDatabase[key];
+  try {
+    // Usa Datamuse API per trovare sinonimi
+    const response = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=8`);
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      // Estrai le parole dai risultati
+      const synonyms = data.map((item: any) => item.word);
+      return synonyms;
     }
+    
+    // Se l'API non trova nulla, prova il database locale con ricerca simile
+    for (const key of Object.keys(synonymsDatabase)) {
+      if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
+        return synonymsDatabase[key];
+      }
+    }
+    
+    return [];
+  } catch (error) {
+    console.warn('Errore nel recupero dei sinonimi dall\'API:', error);
+    
+    // Fallback al database locale in caso di errore
+    if (synonymsDatabase[cleanWord]) {
+      return synonymsDatabase[cleanWord];
+    }
+    
+    for (const key of Object.keys(synonymsDatabase)) {
+      if (cleanWord.startsWith(key) || key.startsWith(cleanWord)) {
+        return synonymsDatabase[key];
+      }
+    }
+    
+    return [];
   }
-  
-  return [];
 }
 
 /**

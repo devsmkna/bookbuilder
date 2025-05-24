@@ -49,13 +49,20 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
   const [dialogueSuggestions, setDialogueSuggestions] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleWordClick = useCallback((word: string) => {
+  const handleWordClick = useCallback(async (word: string) => {
     if (word.length < 3) return;
     
     setSelectedWord(word);
-    const foundSynonyms = findSynonyms(word);
-    setSynonyms(foundSynonyms);
+    setSynonyms([]); // Reset dei sinonimi mentre si carica
     setActiveTab("general");
+    
+    try {
+      const foundSynonyms = await findSynonyms(word);
+      setSynonyms(foundSynonyms);
+    } catch (error) {
+      console.warn('Errore nel caricamento dei sinonimi:', error);
+      setSynonyms([]);
+    }
   }, []);
 
   const handleDialogueSelect = useCallback((dialogue: string) => {
