@@ -28,6 +28,7 @@ export function useEditor() {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [isFormatMenuVisible, setIsFormatMenuVisible] = useState(false);
   const [formatMenuPosition, setFormatMenuPosition] = useState({ top: 0, left: 0 });
+  const [showTableOfContents, setShowTableOfContents] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -331,6 +332,56 @@ export function useEditor() {
     
   }, [selection, editorRef, setContent]);
 
+  // Function to scroll to a specific line in the editor
+  const scrollToLine = useCallback((lineNumber: number) => {
+    if (!editorRef.current) return;
+    
+    const lines = content.split('\n');
+    if (lineNumber > lines.length) return;
+    
+    // Find the character position for the line
+    let charPosition = 0;
+    for (let i = 0; i < lineNumber - 1; i++) {
+      charPosition += lines[i].length + 1; // +1 for newline
+    }
+    
+    // Try to find and scroll to the position
+    const textNodes = editorRef.current.childNodes;
+    let currentPos = 0;
+    
+    for (const node of textNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const textLength = node.textContent?.length || 0;
+        if (currentPos + textLength >= charPosition) {
+          // Found the target node, scroll it into view
+          const range = document.createRange();
+          range.setStart(node, Math.max(0, charPosition - currentPos));
+          range.collapse(true);
+          
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          
+          // Scroll into view
+          const rect = range.getBoundingClientRect();
+          if (rect.top < 100 || rect.top > window.innerHeight - 100) {
+            editorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          
+          break;
+        }
+        currentPos += textLength;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        currentPos += node.textContent?.length || 0;
+      }
+    }
+  }, [content, editorRef]);
+
+  // Toggle Table of Contents visibility
+  const toggleTableOfContents = useCallback(() => {
+    setShowTableOfContents(prev => !prev);
+  }, []);
+
   return {
     editorRef,
     content,
@@ -352,6 +403,9 @@ export function useEditor() {
     saveTemporaryContent,
     restoreTemporaryContent,
     processContent,
-    createWikiLink
+    createWikiLink,
+    showTableOfContents,
+    toggleTableOfContents,
+    scrollToLine
   };
 }
