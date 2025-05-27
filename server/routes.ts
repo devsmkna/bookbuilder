@@ -597,7 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // CHARACTERS API
   // API per ottenere tutti i personaggi dell'utente
-  app.get("/api/characters", async (req, res) => {
+  app.get("/api/characters", ensureUser, async (req, res) => {
     try {
       const userCharacters = await db.select().from(characters)
         .where(eq(characters.userId, (req as any).userId))

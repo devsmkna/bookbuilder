@@ -130,7 +130,7 @@ export function ContextAnalyzer({ text, isVisible, onToggle }: ContextAnalyzerPr
       console.error('Errore nell\'analisi del contesto:', error);
       toast({
         title: "Errore",
-        description: `Impossibile analizzare il contesto del testo: ${error.message}`,
+        description: `Impossibile analizzare il contesto del testo: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`,
         variant: "destructive"
       });
     } finally {
