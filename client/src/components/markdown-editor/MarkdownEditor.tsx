@@ -735,6 +735,14 @@ const MarkdownEditor: React.FC = () => {
         </div>
       </main>
       
+      {/* Table of Contents */}
+      <TableOfContents
+        content={content}
+        isVisible={showTableOfContents}
+        onToggle={toggleTableOfContents}
+        onHeadingClick={scrollToLine}
+      />
+      
       <Footer wordCount={wordCount} charCount={charCount} />
     </div>
   );
