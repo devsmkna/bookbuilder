@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
 import { TextAnalyzer } from "@/components/TextAnalyzer";
+import { TableOfContents } from "@/components/TableOfContents";
 import { useGamificationContext } from "@/context/GamificationContext";
 import { 
   Bold, 
@@ -34,6 +35,36 @@ import "./editor-styles.css";
 const MarkdownEditor: React.FC = () => {
   // Ottieni le funzioni dal contesto di gamification
   const { addWordCount, startWritingSession } = useGamificationContext();
+  
+  const [showTableOfContents, setShowTableOfContents] = useState(false);
+  
+  // Function to scroll to a specific line in the textarea
+  const scrollToLine = (lineNumber: number) => {
+    if (!textareaRef.current) return;
+    
+    const lines = content.split('\n');
+    if (lineNumber > lines.length) return;
+    
+    // Calculate character position for the line
+    let charPosition = 0;
+    for (let i = 0; i < lineNumber - 1; i++) {
+      charPosition += lines[i].length + 1; // +1 for newline
+    }
+    
+    // Set cursor position and scroll to it
+    textareaRef.current.setSelectionRange(charPosition, charPosition);
+    textareaRef.current.focus();
+    
+    // Scroll the line into view
+    const lineHeight = 24; // Approximate line height
+    const scrollTop = (lineNumber - 1) * lineHeight;
+    textareaRef.current.scrollTop = scrollTop;
+  };
+  
+  // Toggle Table of Contents visibility
+  const toggleTableOfContents = () => {
+    setShowTableOfContents(prev => !prev);
+  };
   
   const {
     // State

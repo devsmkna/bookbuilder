@@ -349,7 +349,8 @@ export function useEditor() {
     const textNodes = editorRef.current.childNodes;
     let currentPos = 0;
     
-    for (const node of textNodes) {
+    for (let i = 0; i < textNodes.length; i++) {
+      const node = textNodes[i];
       if (node.nodeType === Node.TEXT_NODE) {
         const textLength = node.textContent?.length || 0;
         if (currentPos + textLength >= charPosition) {
