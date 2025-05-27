@@ -1902,6 +1902,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PLACES API
+  // API per ottenere tutti i luoghi dell'utente
+  app.get("/api/places", async (req, res) => {
+    try {
+      const places = await db.select().from(maps);
+      return res.status(200).json(places);
+    } catch (error) {
+      console.error("Errore nel recuperare i luoghi:", error);
+      return res.status(500).json({ message: "Errore nel recuperare i luoghi" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
