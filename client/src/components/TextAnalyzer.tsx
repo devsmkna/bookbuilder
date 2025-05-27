@@ -12,7 +12,9 @@ import {
   MessageSquareText,
   Type,
   RefreshCw,
+  Users
 } from "lucide-react";
+import { ContextAnalyzer } from "./ContextAnalyzer";
 import {
   Card,
   CardContent,
@@ -153,7 +155,7 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        <TabsList className="grid grid-cols-3 mx-4 mt-2">
+        <TabsList className="grid grid-cols-4 mx-4 mt-2">
           <TabsTrigger value="general" className="flex items-center gap-1">
             <BarChart2 className="h-4 w-4" />
             <span className="hidden sm:inline">Generale</span>
@@ -165,6 +167,10 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
           <TabsTrigger value="dialogue" className="flex items-center gap-1">
             <MessageSquareText className="h-4 w-4" />
             <span className="hidden sm:inline">Dialoghi</span>
+          </TabsTrigger>
+          <TabsTrigger value="context" className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Contesto</span>
           </TabsTrigger>
         </TabsList>
 
