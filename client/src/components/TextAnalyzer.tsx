@@ -499,6 +499,14 @@ export function TextAnalyzer({ text, isVisible, onToggle, editorRef }: TextAnaly
                   </>
                 )}
               </TabsContent>
+
+              <TabsContent value="context" className="flex-auto overflow-hidden flex-col p-0 pt-0">
+                <ContextAnalyzer 
+                  text={text} 
+                  isVisible={activeTab === 'context'} 
+                  onToggle={() => {}} 
+                />
+              </TabsContent>
             </>
           )}
         </div>
