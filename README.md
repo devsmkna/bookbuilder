@@ -1,4 +1,4 @@
-# WYSIWYG Markdown Editor
+# BookBuilder Editor
 
 A minimalist WYSIWYG Markdown editor web application with real-time preview, floating formatting menu, and creative tools for writers including character creation and world building.
 

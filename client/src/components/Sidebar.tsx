@@ -134,7 +134,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         
         <div className="p-4">
           <p className="text-sm text-muted-foreground">
-            WYSIWYG Markdown Editor
+            BookBuilder Editor
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Version 1.0.0
