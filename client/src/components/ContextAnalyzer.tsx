@@ -72,56 +72,76 @@ export function ContextAnalyzer({ text, isVisible, onToggle }: ContextAnalyzerPr
       const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
       
       // Cerca i personaggi esistenti nel testo
-      existingCharacters.forEach((character: any) => {
-        const regex = new RegExp(`\\b${character.name}\\b`, 'gi');
-        const matches = text.match(regex);
-        
-        if (matches && matches.length > 0) {
-          const contexts: string[] = [];
-          
-          // Trova le frasi che contengono il personaggio
-          sentences.forEach(sentence => {
-            if (sentence.toLowerCase().includes(character.name.toLowerCase())) {
-              contexts.push(sentence.trim());
+      if (Array.isArray(existingCharacters)) {
+        existingCharacters.forEach((character: any) => {
+          if (character && character.name) {
+            try {
+              // Escape special regex characters in the name
+              const escapedName = character.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(`\\b${escapedName}\\b`, 'gi');
+              const matches = text.match(regex);
+              
+              if (matches && matches.length > 0) {
+                const contexts: string[] = [];
+                
+                // Trova le frasi che contengono il personaggio
+                sentences.forEach(sentence => {
+                  if (sentence && sentence.toLowerCase().includes(character.name.toLowerCase())) {
+                    contexts.push(sentence.trim());
+                  }
+                });
+                
+                detectedChars.push({
+                  id: character.id || `char_${Date.now()}`,
+                  name: character.name,
+                  mentions: matches.length,
+                  contexts: contexts,
+                  description: character.description || '',
+                  isManual: false
+                });
+              }
+            } catch (regexError) {
+              console.warn('Errore regex per personaggio:', character.name, regexError);
             }
-          });
-          
-          detectedChars.push({
-            id: character.id,
-            name: character.name,
-            mentions: matches.length,
-            contexts: contexts,
-            description: character.description,
-            isManual: false
-          });
-        }
-      });
+          }
+        });
+      }
       
       // Cerca i luoghi esistenti nel testo
-      existingPlaces.forEach((place: any) => {
-        const regex = new RegExp(`\\b${place.name}\\b`, 'gi');
-        const matches = text.match(regex);
-        
-        if (matches && matches.length > 0) {
-          const contexts: string[] = [];
-          
-          // Trova le frasi che contengono il luogo
-          sentences.forEach(sentence => {
-            if (sentence.toLowerCase().includes(place.name.toLowerCase())) {
-              contexts.push(sentence.trim());
+      if (Array.isArray(existingPlaces)) {
+        existingPlaces.forEach((place: any) => {
+          if (place && place.name) {
+            try {
+              // Escape special regex characters in the name
+              const escapedName = place.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(`\\b${escapedName}\\b`, 'gi');
+              const matches = text.match(regex);
+              
+              if (matches && matches.length > 0) {
+                const contexts: string[] = [];
+                
+                // Trova le frasi che contengono il luogo
+                sentences.forEach(sentence => {
+                  if (sentence && sentence.toLowerCase().includes(place.name.toLowerCase())) {
+                    contexts.push(sentence.trim());
+                  }
+                });
+                
+                detectedLocs.push({
+                  id: place.id || `place_${Date.now()}`,
+                  name: place.name,
+                  mentions: matches.length,
+                  contexts: contexts,
+                  description: place.description || '',
+                  isManual: false
+                });
+              }
+            } catch (regexError) {
+              console.warn('Errore regex per luogo:', place.name, regexError);
             }
-          });
-          
-          detectedLocs.push({
-            id: place.id,
-            name: place.name,
-            mentions: matches.length,
-            contexts: contexts,
-            description: place.description,
-            isManual: false
-          });
-        }
-      });
+          }
+        });
+      }
       
       setCharacters(detectedChars);
       setLocations(detectedLocs);
