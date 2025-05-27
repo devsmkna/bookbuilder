@@ -1,0 +1,1904 @@
+openapi: 3.0.0
+info:
+  title: BookBuilder API
+  version: 1.0.0
+  description: API for BookBuilder, a gamified writing application with tools for character creation, world-building, and more.
+servers:
+  - url: http://localhost:5000/api
+
+components:
+  schemas:
+    # Core Schemas based on shared/schema.ts and Zod
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user.
+          readOnly: true
+        username:
+          type: string
+          description: Username of the user.
+        # password is not exposed in API responses
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp of user creation.
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of last user update.
+          readOnly: true
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier for the document.
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          description: Identifier of the user who owns the document.
+          readOnly: true
+        title:
+          type: string
+          description: Title of the document.
+          default: "Nuovo Documento"
+        content:
+          type: string
+          description: Content of the document in Markdown format.
+        wordCount:
+          type: integer
+          description: Total word count of the document.
+          readOnly: true
+        charCount:
+          type: integer
+          description: Total character count of the document.
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp of document creation.
+          readOnly: true
+        lastEdited:
+          type: string
+          format: date-time
+          description: Timestamp of last document edit.
+          readOnly: true
+
+    DocumentInput:
+      type: object
+      required:
+        - content
+      properties:
+        title:
+          type: string
+          description: Title of the document.
+          default: "Nuovo Documento"
+        content:
+          type: string
+          description: Content of the document in Markdown format.
+
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the character (e.g., char_...).
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          description: Identifier of the user who owns the character.
+          readOnly: true
+        name:
+          type: string
+          description: Name of the character.
+        pronunciation:
+          type: string
+          nullable: true
+        aliases:
+          type: string
+          nullable: true
+        age:
+          type: string
+          nullable: true
+        race:
+          type: string
+          nullable: true
+        imageData:
+          type: string
+          format: uri
+          nullable: true
+          description: URL or base64 encoded image data for the character.
+        eyeColor:
+          type: string
+          nullable: true
+        secondEyeColor:
+          type: string
+          nullable: true
+        hasHeterochromia:
+          type: boolean
+          nullable: true
+        hairColor:
+          type: string
+          nullable: true
+        skinColor:
+          type: string
+          nullable: true
+        height:
+          type: string
+          nullable: true
+        bodyType:
+          type: string
+          nullable: true
+        attitude:
+          type: string
+          nullable: true
+        bodyLanguage:
+          type: string
+          nullable: true
+        bodySigns:
+          type: string
+          nullable: true
+        parentalRelationship:
+          type: string
+          nullable: true
+        parentalTeachings:
+          type: string
+          nullable: true
+        respect:
+          type: string
+          nullable: true
+        hates:
+          type: string
+          nullable: true
+        fears:
+          type: string
+          nullable: true
+        contradictions:
+          type: string
+          nullable: true
+        dreams:
+          type: string
+          nullable: true
+        sacrificeForDreams:
+          type: string
+          nullable: true
+        values:
+          type: string
+          nullable: true
+        antiValues:
+          type: string
+          nullable: true
+        motivationEvolution:
+          type: string
+          nullable: true
+        emotionalEvolution:
+          type: string
+          nullable: true
+        relationshipEvolution:
+          type: string
+          nullable: true
+        dreamEvolution:
+          type: string
+          nullable: true
+        completionPercentage:
+          type: integer
+          description: Percentage of the character profile that has been filled out.
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CharacterInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the character.
+        pronunciation:
+          type: string
+          nullable: true
+        aliases:
+          type: string
+          nullable: true
+        age:
+          type: string
+          nullable: true
+        race:
+          type: string
+          nullable: true
+        imageData:
+          type: string
+          format: uri # Assuming it could be a URL or base64 string
+          nullable: true
+        eyeColor:
+          type: string
+          nullable: true
+        secondEyeColor:
+          type: string
+          nullable: true
+        hasHeterochromia:
+          type: boolean
+          nullable: true
+        hairColor:
+          type: string
+          nullable: true
+        skinColor:
+          type: string
+          nullable: true
+        height:
+          type: string
+          nullable: true
+        bodyType:
+          type: string
+          nullable: true
+        attitude:
+          type: string
+          nullable: true
+        bodyLanguage:
+          type: string
+          nullable: true
+        bodySigns:
+          type: string
+          nullable: true
+        parentalRelationship:
+          type: string
+          nullable: true
+        parentalTeachings:
+          type: string
+          nullable: true
+        respect:
+          type: string
+          nullable: true
+        hates:
+          type: string
+          nullable: true
+        fears:
+          type: string
+          nullable: true
+        contradictions:
+          type: string
+          nullable: true
+        dreams:
+          type: string
+          nullable: true
+        sacrificeForDreams:
+          type: string
+          nullable: true
+        values:
+          type: string
+          nullable: true
+        antiValues:
+          type: string
+          nullable: true
+        motivationEvolution:
+          type: string
+          nullable: true
+        emotionalEvolution:
+          type: string
+          nullable: true
+        relationshipEvolution:
+          type: string
+          nullable: true
+        dreamEvolution:
+          type: string
+          nullable: true
+
+    Race:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the race (e.g., race_...).
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          description: Identifier of the user who owns the race.
+          readOnly: true
+        name:
+          type: string
+        lore:
+          type: string
+          nullable: true
+        traits:
+          type: string
+          nullable: true
+        society:
+          type: string
+          nullable: true
+        habitat:
+          type: string
+          nullable: true
+        imageData:
+          type: string
+          format: uri
+          nullable: true
+          description: URL or base64 encoded image data for the race.
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    RaceInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        lore:
+          type: string
+          nullable: true
+        traits:
+          type: string
+          nullable: true
+        society:
+          type: string
+          nullable: true
+        habitat:
+          type: string
+          nullable: true
+        imageData:
+          type: string
+          format: uri
+          nullable: true
+
+    Map: # Also used for "Place" as per current /api/places
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the map (e.g., map_...).
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          description: Identifier of the user who owns the map.
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        imageData:
+          type: string
+          format: uri # Assuming it's a URL or base64 string
+          description: Image data for the map.
+        points: # Stored as JSON string in DB, represented as array of objects here
+          type: array
+          items:
+            type: object 
+            # Define point properties if known, otherwise keep as generic object
+            # Example:
+            # properties:
+            #   x: 
+            #     type: number
+            #   y:
+            #     type: number
+            #   name:
+            #     type: string
+          description: Array of points of interest on the map.
+          default: []
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    MapInput:
+      type: object
+      required:
+        - name
+        - imageData
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        imageData:
+          type: string
+          format: uri
+        points:
+          type: array
+          items:
+            type: object
+          nullable: true
+          default: []
+          
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the event (e.g., event_...).
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          description: Identifier of the user who owns the event.
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        date: # Could be a specific date or a chronological marker
+          type: string
+          nullable: true
+        importance:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 0
+        involvedCharacters: # Stored as JSON string, represented as array of strings (character IDs)
+          type: array
+          items:
+            type: string # Character ID
+          description: List of character IDs involved in the event.
+          default: []
+        locations: # Stored as JSON string, represented as array of strings (map/place IDs)
+          type: array
+          items:
+            type: string # Map/Place ID
+          description: List of location IDs related to the event.
+          default: []
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    EventInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        date:
+          type: string
+          nullable: true
+        importance:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 0
+        involvedCharacters:
+          type: array
+          items:
+            type: string
+          nullable: true
+          default: []
+        locations:
+          type: array
+          items:
+            type: string
+          nullable: true
+          default: []
+
+    UserStats:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          readOnly: true
+        wordCount:
+          type: integer
+          default: 0
+        wordCountToday:
+          type: integer
+          default: 0
+        wordCountWeek:
+          type: integer
+          default: 0
+        characterCount:
+          type: integer
+          default: 0
+        placeCount: # Number of maps/places
+          type: integer
+          default: 0
+        eventCount:
+          type: integer
+          default: 0
+        raceCount:
+          type: integer
+          default: 0
+        sessionsCompleted:
+          type: integer
+          default: 0
+        wordsPerDay: # Average words per day
+          type: integer # Represented as integer in schema, could be float
+          default: 0
+        dailyGoalReached: # Represented as integer (0 or 1) in DB
+          type: boolean 
+          description: True if daily goal reached, false otherwise.
+          default: false
+        dailyGoalStreak:
+          type: integer
+          default: 0
+        writeStreak: # Current consecutive days of writing
+          type: integer
+          default: 0
+        longestWriteStreak:
+          type: integer
+          default: 0
+        writeTime: # Total time spent writing in seconds or minutes
+          type: integer
+          default: 0
+        writingSpeed: # Words per minute
+          type: integer
+          default: 0
+        dailyWordGoal:
+          type: integer
+          default: 500 # Default daily goal
+        theme:
+          type: string
+          nullable: true
+        experience:
+          type: integer
+          default: 0
+        level:
+          type: integer
+          default: 1
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    UserStatsUpdateInput: # For PUT /stats
+      type: object
+      properties:
+        wordCount:
+          type: integer
+          nullable: true
+        wordCountToday:
+          type: integer
+          nullable: true
+        wordCountWeek:
+          type: integer
+          nullable: true
+        characterCount:
+          type: integer
+          nullable: true
+        placeCount:
+          type: integer
+          nullable: true
+        eventCount:
+          type: integer
+          nullable: true
+        raceCount:
+          type: integer
+          nullable: true
+        sessionsCompleted:
+          type: integer
+          nullable: true
+        wordsPerDay:
+          type: integer
+          nullable: true
+        dailyGoalReached:
+          type: boolean # Zod schema uses boolean, DB uses integer
+          nullable: true
+        dailyGoalStreak:
+          type: integer
+          nullable: true
+        writeStreak:
+          type: integer
+          nullable: true
+        longestWriteStreak:
+          type: integer
+          nullable: true
+        writeTime:
+          type: integer
+          nullable: true
+        writingSpeed:
+          type: integer
+          nullable: true
+        dailyWordGoal:
+          type: integer
+          nullable: true
+        theme:
+          type: string
+          nullable: true
+        experience:
+          type: integer
+          nullable: true
+        level:
+          type: integer
+          nullable: true
+
+    UserStatsIncrementInput: # For POST /stats/increment
+      type: object
+      properties:
+        wordCount:
+          type: integer
+          nullable: true
+        wordCountToday:
+          type: integer
+          nullable: true
+        wordCountWeek:
+          type: integer
+          nullable: true
+        characterCount:
+          type: integer
+          nullable: true
+        placeCount:
+          type: integer
+          nullable: true
+        eventCount:
+          type: integer
+          nullable: true
+        raceCount:
+          type: integer
+          nullable: true
+          
+    AchievementDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        statType: # e.g., wordCount, characterCount
+          type: string
+          readOnly: true
+        threshold: # Value to reach for unlocking
+          type: integer
+          readOnly: true
+        xp: # Experience points awarded
+          type: integer
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          
+    UserAchievement: # Represents the combined view from GET /achievements
+      allOf:
+        - $ref: '#/components/schemas/AchievementDefinition'
+        - type: object
+          properties:
+            unlocked:
+              type: boolean
+              default: false
+            progress:
+              type: integer # Percentage
+              minimum: 0
+              maximum: 100
+              default: 0
+            unlockDate:
+              type: string
+              format: date-time
+              nullable: true
+              readOnly: true
+              
+    UserAchievementUpdateInput: # For PUT /achievements/:id
+      type: object
+      properties:
+        unlocked:
+          type: boolean
+          nullable: true
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+
+    WritingSession:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          readOnly: true
+        wordCount:
+          type: integer
+          minimum: 0
+        duration: # in seconds or minutes, clarify unit
+          type: integer
+          minimum: 0
+          description: Duration of the writing session (e.g., in seconds).
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        date: # YYYY-MM-DD format
+          type: string
+          format: date
+          description: The date the session occurred.
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    WritingSessionInput:
+      type: object
+      required:
+        - wordCount
+        - duration
+      properties:
+        wordCount:
+          type: integer
+          minimum: 0
+        duration:
+          type: integer
+          minimum: 0
+          description: Duration of the writing session (e.g., in seconds).
+        startTime:
+          type: string
+          format: date-time
+          nullable: true
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        date: # YYYY-MM-DD format
+          type: string
+          format: date
+          nullable: true
+          description: The date the session occurred, defaults to current date if not provided.
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        errors: # For Zod validation errors
+          type: array
+          items:
+            type: object # Structure of ZodError.errors
+          nullable: true
+
+paths:
+  # Documents
+  /documents:
+    get:
+      summary: Get all documents for the user
+      operationId: getDocuments
+      tags:
+        - Documents
+      responses:
+        '200':
+          description: A list of documents.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new document
+      operationId: createDocument
+      tags:
+        - Documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      responses:
+        '201':
+          description: Document created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  document:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Invalid input (e.g., content is missing)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /documents/{id}:
+    get:
+      summary: Get a specific document by ID
+      operationId: getDocumentById
+      tags:
+        - Documents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the document to retrieve.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The requested document.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '404':
+          description: Document not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update an existing document
+      operationId: updateDocument
+      tags:
+        - Documents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the document to update.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput' # Can update title and/or content
+      responses:
+        '200':
+          description: Document updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  document:
+                    $ref: '#/components/schemas/Document'
+        '404':
+          description: Document not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Gamification (Stats & Achievements)
+  /stats:
+    get:
+      summary: Get user statistics
+      operationId: getUserStats
+      tags:
+        - Gamification
+      responses:
+        '200':
+          description: User statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStats'
+        '404':
+          description: Statistics not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update user statistics
+      operationId: updateUserStats
+      tags:
+        - Gamification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserStatsUpdateInput'
+      responses:
+        '200':
+          description: Statistics updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  stats:
+                    $ref: '#/components/schemas/UserStats'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Statistics not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /stats/increment:
+    post:
+      summary: Increment specific user statistics
+      operationId: incrementUserStats
+      tags:
+        - Gamification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserStatsIncrementInput'
+      responses:
+        '200':
+          description: Statistics incremented successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  stats:
+                    $ref: '#/components/schemas/UserStats'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Statistics not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /achievements:
+    get:
+      summary: Get all achievements and user progress
+      operationId: getAchievements
+      tags:
+        - Gamification
+      responses:
+        '200':
+          description: A list of all achievement definitions combined with user's progress.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserAchievement'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /achievements/{id}:
+    put:
+      summary: Update user's progress on a specific achievement
+      operationId: updateUserAchievement
+      tags:
+        - Gamification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the achievement definition.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAchievementUpdateInput'
+      responses:
+        '200':
+          description: Achievement updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  achievement: # The updated user achievement (combined view)
+                    $ref: '#/components/schemas/UserAchievement'
+        '404':
+          description: Achievement definition not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Writing Sessions
+  /writing-sessions:
+    get:
+      summary: Get user's writing sessions, optionally filtered by date
+      operationId: getWritingSessions
+      tags:
+        - Writing Sessions
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          description: Filter sessions from this date (YYYY-MM-DD).
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          description: Filter sessions up to this date (YYYY-MM-DD).
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: A list of writing sessions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WritingSession'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new writing session
+      operationId: createWritingSession
+      tags:
+        - Writing Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WritingSessionInput'
+      responses:
+        '201':
+          description: Writing session created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  session:
+                    $ref: '#/components/schemas/WritingSession'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Characters
+  /characters:
+    get:
+      summary: Get all characters for the user
+      operationId: getCharacters
+      tags:
+        - Characters
+      responses:
+        '200':
+          description: A list of characters.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Character'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new character
+      operationId: createCharacter
+      tags:
+        - Characters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterInput'
+      responses:
+        '201':
+          description: Character created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  character:
+                    $ref: '#/components/schemas/Character'
+        '400':
+          description: Invalid input (e.g., name is missing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /characters/{id}:
+    get:
+      summary: Get a specific character by ID
+      operationId: getCharacterById
+      tags:
+        - Characters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the character to retrieve (e.g., char_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested character.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '404':
+          description: Character not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update an existing character
+      operationId: updateCharacter
+      tags:
+        - Characters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the character to update (e.g., char_...).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterInput'
+      responses:
+        '200':
+          description: Character updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  character:
+                    $ref: '#/components/schemas/Character'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '404':
+          description: Character not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete a character
+      operationId: deleteCharacter
+      tags:
+        - Characters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the character to delete (e.g., char_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Character deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Character not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Races
+  /races:
+    get:
+      summary: Get all races for the user
+      operationId: getRaces
+      tags:
+        - Races
+      responses:
+        '200':
+          description: A list of races.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Race'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new race
+      operationId: createRace
+      tags:
+        - Races
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaceInput'
+      responses:
+        '201':
+          description: Race created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  race:
+                    $ref: '#/components/schemas/Race'
+        '400':
+          description: Invalid input (e.g., name is missing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /races/{id}:
+    get:
+      summary: Get a specific race by ID
+      operationId: getRaceById
+      tags:
+        - Races
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the race to retrieve (e.g., race_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested race.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Race'
+        '404':
+          description: Race not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update an existing race
+      operationId: updateRace
+      tags:
+        - Races
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the race to update (e.g., race_...).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaceInput'
+      responses:
+        '200':
+          description: Race updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  race:
+                    $ref: '#/components/schemas/Race'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '404':
+          description: Race not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete a race
+      operationId: deleteRace
+      tags:
+        - Races
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the race to delete (e.g., race_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Race deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Race not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Maps (World Building)
+  /maps:
+    get:
+      summary: Get all maps (places) for the user
+      operationId: getMaps
+      tags:
+        - Maps & Places
+      responses:
+        '200':
+          description: A list of maps.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Map'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new map
+      operationId: createMap
+      tags:
+        - Maps & Places
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapInput'
+      responses:
+        '201':
+          description: Map created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  map:
+                    $ref: '#/components/schemas/Map'
+        '400':
+          description: Invalid input (e.g., name or imageData is missing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /maps/{id}:
+    get:
+      summary: Get a specific map by ID
+      operationId: getMapById
+      tags:
+        - Maps & Places
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the map to retrieve (e.g., map_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested map.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Map'
+        '404':
+          description: Map not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update an existing map
+      operationId: updateMap
+      tags:
+        - Maps & Places
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the map to update (e.g., map_...).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapInput'
+      responses:
+        '200':
+          description: Map updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  map:
+                    $ref: '#/components/schemas/Map'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '404':
+          description: Map not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete a map
+      operationId: deleteMap
+      tags:
+        - Maps & Places
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the map to delete (e.g., map_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Map deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Map not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  # Events (Storyboard Planner)
+  /events:
+    get:
+      summary: Get all events for the user
+      operationId: getEvents
+      tags:
+        - Events
+      responses:
+        '200':
+          description: A list of events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new event
+      operationId: createEvent
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventInput'
+      responses:
+        '201':
+          description: Event created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  event:
+                    $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid input (e.g., name is missing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/{id}:
+    get:
+      summary: Get a specific event by ID
+      operationId: getEventById
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the event to retrieve (e.g., event_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update an existing event
+      operationId: updateEvent
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the event to update (e.g., event_...).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventInput'
+      responses:
+        '200':
+          description: Event updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  event:
+                    $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' # Zod errors
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete an event
+      operationId: deleteEvent
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the event to delete (e.g., event_...).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Places (currently alias for GET /maps)
+  /places:
+    get:
+      summary: Get all places (currently lists maps) for the user
+      operationId: getPlaces
+      tags:
+        - Maps & Places # Tagged same as /maps due to current functionality
+      responses:
+        '200':
+          description: A list of places (maps).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Map' # Returns Map objects
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
