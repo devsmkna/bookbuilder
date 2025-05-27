@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API per aggiornare un personaggio esistente
-  app.put("/api/characters/:id", async (req, res) => {
+  app.put("/api/characters/:id", ensureUser, async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -1904,9 +1904,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // PLACES API
   // API per ottenere tutti i luoghi dell'utente
-  app.get("/api/places", async (req, res) => {
+  app.get("/api/places", ensureUser, async (req, res) => {
     try {
-      const places = await db.select().from(maps);
+      const places = await db.select().from(maps)
+        .where(eq(maps.userId, (req as any).userId));
       return res.status(200).json(places);
     } catch (error) {
       console.error("Errore nel recuperare i luoghi:", error);
